@@ -46,12 +46,12 @@
 #### Ссылки на материалы
 
 * Описание формата WAV
-  * https://en.wikipedia.org/wiki/WAV
-  * https://audiocoding.ru/articles/2008-05-22-wav-file-structure/
-  * http://soundfile.sapp.org/doc/WaveFormat/
+  * [https://en.wikipedia.org/wiki/WAV](https://en.wikipedia.org/wiki/WAV)
+  * [https://audiocoding.ru/articles/2008-05-22-wav-file-structure](https://audiocoding.ru/articles/2008-05-22-wav-file-structure)
+  * [http://soundfile.sapp.org/doc/WaveFormat](http://soundfile.sapp.org/doc/WaveFormat)
 * Описание эффекта реверберации
-  * https://en.wikipedia.org/wiki/Reverberation
-  * https://ru.wikipedia.org/wiki/Реверберация
-  * http://wikisound.org/Реверберация
+  * [https://en.wikipedia.org/wiki/Reverberation](https://en.wikipedia.org/wiki/Reverberation)
+  * [https://ru.wikipedia.org/wiki/Реверберация](https://ru.wikipedia.org/wiki/Реверберация)
+  * [http://wikisound.org/Реверберация](http://wikisound.org/Реверберация)
 * Вводная статья по цифровому звуку
-  * https://habr.com/ru/post/275613/
+  * [https://habr.com/ru/post/275613](https://habr.com/ru/post/275613)
