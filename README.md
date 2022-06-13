@@ -60,14 +60,13 @@
 
 Убедитесь, что у вас установлены утилиты git, cmake, make, gcc:
 
-Для Debian / Ubuntu: sudo apt-get install git cmake make gcc
-Для CentOS: sudo yum install git cmake make gcc
+Для Debian / Ubuntu: sudo apt-get install git cmake make gcc  
+Для CentOS: sudo yum install git cmake make gcc  
 Для Fedora: sudo dnf install git cmake make gcc
 
 1. git clone https://gitflic.ru/project/shurup239/simple-dsp-a.git
 2. cd simple-dsp-a
 3. mkdir build
 4. cd build
-5. Для Release сборки: cmake --DCMAKE_BUILD_TYPE=Release ../
-   Для Debug сборки: cmake --DCMAKE_BUILD_TYPE=Debug ../
+5. Для Release сборки: cmake --DCMAKE_BUILD_TYPE=Release ../  Для Debug сборки: cmake --DCMAKE_BUILD_TYPE=Debug ../
 6. make
