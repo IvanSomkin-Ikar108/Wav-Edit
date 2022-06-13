@@ -58,11 +58,11 @@
 
 #### Сборка с помощью CMake для Linux
 
-Убедитесь, что у вас установлены утилиты git, cmake, make, gcc:
+Убедитесь, что у вас установлены утилиты git, cmake, make, gcc, gcc-c++:
 
-Для Debian / Ubuntu: sudo apt-get install git cmake make gcc  
-Для CentOS: sudo yum install git cmake make gcc  
-Для Fedora: sudo dnf install git cmake make gcc
+Для Debian / Ubuntu: sudo apt-get install git cmake make gcc gcc-c++ 
+Для CentOS: sudo yum install git cmake make gcc gcc-c++
+Для Fedora: sudo dnf install git cmake make gcc gcc-c++
 
 1. git clone https://gitflic.ru/project/shurup239/simple-dsp-a.git
 2. cd simple-dsp-a
