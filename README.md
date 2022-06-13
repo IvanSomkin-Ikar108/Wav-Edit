@@ -68,6 +68,6 @@
 2. cd simple-dsp-a
 3. mkdir build
 4. cd build
-5. Для Release сборки: cmake --DCMAKE_BUILD_TYPE=Release ../  
-Для Debug сборки: cmake --DCMAKE_BUILD_TYPE=Debug ../
+5. Для Release сборки: cmake -DCMAKE_BUILD_TYPE=Release ../  
+Для Debug сборки: cmake -DCMAKE_BUILD_TYPE=Debug ../
 6. make
