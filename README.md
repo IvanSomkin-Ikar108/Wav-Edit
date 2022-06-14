@@ -55,3 +55,19 @@
   * [http://wikisound.org/Реверберация](http://wikisound.org/Реверберация)
 * Вводная статья по цифровому звуку
   * [https://habr.com/ru/post/275613](https://habr.com/ru/post/275613)
+
+#### Сборка с помощью CMake для Linux
+
+Убедитесь, что у вас установлены утилиты git, cmake, make, gcc, gcc-c++:
+
+Для Debian / Ubuntu: sudo apt-get install git cmake make gcc gcc-c++ 
+Для CentOS: sudo yum install git cmake make gcc gcc-c++
+Для Fedora: sudo dnf install git cmake make gcc gcc-c++
+
+1. git clone https://gitflic.ru/project/shurup239/simple-dsp-a.git
+2. cd simple-dsp-a
+3. mkdir build
+4. cd build
+5. Для Release сборки: cmake -DCMAKE_BUILD_TYPE=Release ../  
+Для Debug сборки: cmake -DCMAKE_BUILD_TYPE=Debug ../
+6. make
