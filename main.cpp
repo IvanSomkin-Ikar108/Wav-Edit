@@ -117,8 +117,8 @@ void run_mode_help()
 
        << "MODE = printhex\n"
        << "    PARAM1 = path to a file\n"
-       << "    PARAM2 = number of baits\n"
-       << "       Print first PARAM2 baits as hex numbers\n" << endl;
+       << "    PARAM2 = number of bytes\n"
+       << "       Print first PARAM2 bytes as hex numbers\n" << endl;
 }
 
 void run_mode_testmode(TestFileParams& params)
