@@ -5,6 +5,12 @@ using std::cout;
 using std::endl;
 using std::string;
 
+namespace modes
+{
+  const string help = "help";
+  const string test = "testmode";
+}
+
 struct params_test
 {
   const string& fname;
@@ -23,6 +29,9 @@ void run_mode_help()
        << "MODE = help\n"
        << "    Will print this help\n\n"
 
+       << "MODE = help\n"
+       << "    Will print this help\n\n"
+
        << "MODE = testmode\n"
        << "    PARAM1 = path to a file\n"
        << "        Will test if the file is exists" << endl;
@@ -33,10 +42,10 @@ int main(int argc, const char* argv[])
   if (argc > 2)
   {
     cout << "mode = '" << argv[1] << "'" << endl;
-    cout << "fname = '" << argv[2] << "'" << endl;
+    cout << "fname = '" << string(argv[2]) << "'" << endl;
 
     const string mode = string(argv[1]);
-    if ( mode == "help" || mode != "testmode" )
+    if ( mode == modes::help || mode !=  modes::test)
     {
       run_mode_help();
     }
