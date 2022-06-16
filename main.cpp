@@ -17,16 +17,15 @@ void run_mode_test(params_test& cfg)
 
 void run_mode_help()
 {
-  cout << "USAGE:" << endl;
-  cout << "simple-dsp.exe MODE PARAM1 PARAM2 ..." << endl << endl;
+  cout << "USAGE:\n"
+       << "simple-dsp.exe MODE PARAM1 PARAM2 ...\n\n"
 
-  cout << "MODE = help" << endl;
-  cout << "    Will print this help" << endl << endl;
+       << "MODE = help\n"
+       << "    Will print this help\n\n"
 
-  cout << "MODE = testmode" << endl;
-  cout << "    PARAM1 = path to a file" << endl;
-  cout << "        Will test if the file is exists" << endl;
-	cout.flush();
+       << "MODE = testmode\n"
+       << "    PARAM1 = path to a file\n"
+       << "        Will test if the file is exists" << endl;
 }
 
 int main(int argc, const char* argv[]) 
