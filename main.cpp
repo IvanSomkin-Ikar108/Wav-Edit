@@ -30,8 +30,8 @@ struct TestFileParams
 struct ReadFileParams
 {
   const string& filePath;
-  const uint32_t& neededLength;
-  ReadFileParams(const string& filePath, const uint32_t& neededLength):
+  const size_t& neededLength;
+  ReadFileParams(const string& filePath, const size_t& neededLength):
     filePath(filePath),
     neededLength(neededLength)
   {}
@@ -65,7 +65,7 @@ int main(int argc, const char* argv[])
       }
       else
       {
-        std::cout << "Invalid number of arguments for 'printhex'. Needs filepath.";
+        cout << "Invalid number of arguments for 'printhex'. Needs filepath.";
       }
     }
     else if (mode == modes::printhex)
@@ -107,7 +107,7 @@ int main(int argc, const char* argv[])
 
 void coutAsHex(uint8_t byte, char separator)
 {
-  std::cout << std::hex << std::setfill('0') << std::setw(2) << (int)byte << separator;
+  cout << std::hex << std::setfill('0') << std::setw(2) << (int)byte << separator;
 }
 
 void run_mode_help()
