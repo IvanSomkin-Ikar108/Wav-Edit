@@ -29,9 +29,6 @@ void run_mode_help()
        << "MODE = help\n"
        << "    Will print this help\n\n"
 
-       << "MODE = help\n"
-       << "    Will print this help\n\n"
-
        << "MODE = testmode\n"
        << "    PARAM1 = path to a file\n"
        << "        Will test if the file is exists" << endl;
