@@ -30,8 +30,8 @@ struct TestFileParams
 struct ReadFileParams
 {
   const string& filePath;
-  const uint32_t neededLength;
-  ReadFileParams(const string& filePath, const uint32_t neededLength):
+  const uint32_t& neededLength;
+  ReadFileParams(const string& filePath, const uint32_t& neededLength):
     filePath(filePath),
     neededLength(neededLength)
   {}
@@ -77,9 +77,16 @@ int main(int argc, const char* argv[])
         size_t neededLength;
         conversion >> neededLength;
 
-        const string filePath = string(argv[2]);
-        ReadFileParams params = ReadFileParams(filePath, neededLength);
-        run_mode_printhex(params);
+        if(conversion.fail())
+        {
+          cout << "Invalid neededLength parameter.";
+        }
+        else
+        {
+          const string filePath = string(argv[2]);
+          ReadFileParams params = ReadFileParams(filePath, neededLength);
+          run_mode_printhex(params);
+        }
       }
       else
       {
@@ -173,9 +180,11 @@ void run_mode_printhex(ReadFileParams& params)
       }
       coutAsHex(bytes[readLength], '\n');
     }
+    cout << "File read succesfully.\n";
   }
   catch (std::invalid_argument& e)
   {
-    cerr << e.what() << std::endl;
+    cerr << e.what() << endl;
+    cout << "File read unsuccesfully.\n";
   }
 }
