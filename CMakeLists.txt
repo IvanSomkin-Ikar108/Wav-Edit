@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.10)
 
-project(hello-world)
+project(wav-edit)
 
-add_executable(hello-world main.cpp)
+set (CMAKE_CXX_STANDARD 11)
+
+add_executable(wav-edit main.cpp readfile.cpp readfile.h)

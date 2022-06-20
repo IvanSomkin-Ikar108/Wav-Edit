@@ -1,6 +1,11 @@
-#Local build directory
+# Local build directory
 [Bb]uild
 [Cc]make-build
+
+# Executables and test files
+*.exe
+*.wav
+*.txt
 
 #Last GitIgnore part was generated with www.toptal.com/developers/gitignore/api 
 
