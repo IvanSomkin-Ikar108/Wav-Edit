@@ -5,7 +5,13 @@
 #include <cstdint>
 #include <string>
 
-std::vector<uint8_t> readfile(const std::string& filePath, size_t neededLength8);
-// throw invalid_argument exception if arguments are incorrect
+
+// Reads file from filePath into std::vector of bytes.
+// If maxByteRead is more than 0 and less than file size, only reads maxByteRead bytes.
+
+// Throws std::invalid_argument exception if filePath does not exist
+// Throws std::runtime_error if error while reading file
+
+std::vector<uint8_t> readfile(const std::string& filePath, size_t maxByteRead = 0);
 
 #endif

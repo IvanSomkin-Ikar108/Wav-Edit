@@ -30,14 +30,16 @@ struct TestFileParams
 struct ReadFileParams
 {
   const string& filePath;
-  const size_t& neededLength;
-  ReadFileParams(const string& filePath, const size_t& neededLength):
+  const size_t& maxPrintCount;
+  ReadFileParams(const string& filePath, const size_t& maxPrintCount):
     filePath(filePath),
-    neededLength(neededLength)
+    maxPrintCount(maxPrintCount)
   {}
 };
 
-void coutAsHex(uint8_t byte, char separator);
+void cout_as_hex(uint8_t byte, char separator);
+
+void print_as_hex_columns(std::vector<uint8_t>& bytes, size_t columnsCount = 16, size_t maxPrintCount = 256);
 
 void run_mode_help();
 
@@ -70,27 +72,44 @@ int main(int argc, const char* argv[])
     }
     else if (mode == modes::printhex)
     {
-      if (argc > 3)
+      if (argc > 2)
       {
-        stringstream conversion;
-        conversion << argv[3];
-        size_t neededLength;
-        conversion >> neededLength;
+        const string filePath = string(argv[2]);
+        size_t maxPrintCount = 256; // int
+        bool goodPrintCount = true;
 
-        if(conversion.fail())
+        if (argc > 3)
         {
-          cout << "Invalid neededLength parameter.";
+          int argv3Int;
+          stringstream conversion;
+          conversion << argv[3];
+          conversion >> argv3Int;
+
+          if (conversion.fail())
+          {
+            cout << "Invalid maxPrintCount parameter.";
+            goodPrintCount = false;
+          }
+          else if (argv3Int < 1)
+          {
+            cout << "Parameter maxPrintCount should be more than 0.";
+            goodPrintCount = false;
+          }
+          else
+          {
+            maxPrintCount = (size_t)argv3Int;
+          }
         }
-        else
+
+        if (goodPrintCount) 
         {
-          const string filePath = string(argv[2]);
-          ReadFileParams params = ReadFileParams(filePath, neededLength);
-          run_mode_printhex(params);
+          ReadFileParams params = ReadFileParams(filePath, maxPrintCount);
+          run_mode_printhex(params); 
         }
       }
       else
       {
-        cout << "Invalid number of arguments for 'printhex'. Needs filepath, neededLength.";
+        cout << "Invalid number of arguments for 'printhex'. Needs filepath.";
       }
     }
     else
@@ -103,11 +122,6 @@ int main(int argc, const char* argv[])
     run_mode_help();
   }
   return 0;
-}
-
-void coutAsHex(uint8_t byte, char separator)
-{
-  cout << std::hex << std::setfill('0') << std::setw(2) << (int)byte << separator;
 }
 
 void run_mode_help()
@@ -146,18 +160,31 @@ void run_mode_printhex(ReadFileParams& params)
 {
   try
   {
-    std::vector<uint8_t> bytes = readfile(params.filePath, params.neededLength);
-    int printLength;
-    if (bytes.size() < 256)
+    std::vector<uint8_t> bytes = readfile(params.filePath, params.maxPrintCount);
+    print_as_hex_columns(bytes, 16, params.maxPrintCount);
+    cout << "File read succesfully.\n";
+  }
+  catch (std::exception& e)
+  {
+    cerr << e.what() << endl;
+    cout << "File read unsuccesfully.\n";
+  }
+}
+
+void cout_as_hex(uint8_t byte, char separator)
+{
+  cout << std::hex << std::setfill('0') << std::setw(2) << (int)byte << separator;
+}
+
+void print_as_hex_columns(std::vector<uint8_t>& bytes, size_t columnsCount, size_t maxPrintCount)
+{
+    int printLength = maxPrintCount;
+    if (bytes.size() < maxPrintCount)
     {
       printLength = bytes.size();
     }
-    else
-    {
-      printLength = 256;
-    }
 
-    int columns = 16;
+    int columns = columnsCount;
     int rows = printLength / columns;
     int rest = printLength % columns;
     int i, j, readLength = 0;
@@ -166,25 +193,18 @@ void run_mode_printhex(ReadFileParams& params)
     {
       for (j = 0; j < columns - 1; j++)
       {
-        coutAsHex(bytes[readLength], ' ');
+        cout_as_hex(bytes[readLength], ' ');
         readLength++;
       }
-      coutAsHex(bytes[readLength], '\n');
+      cout_as_hex(bytes[readLength], '\n');
     }
     if (rest != 0) 
     {
       for (j = 0; j < rest - 1; j++)
       {
-        coutAsHex(bytes[readLength], ' ');
+        cout_as_hex(bytes[readLength], ' ');
         readLength++;
       }
-      coutAsHex(bytes[readLength], '\n');
+      cout_as_hex(bytes[readLength], '\n');
     }
-    cout << "File read succesfully.\n";
-  }
-  catch (std::invalid_argument& e)
-  {
-    cerr << e.what() << endl;
-    cout << "File read unsuccesfully.\n";
-  }
 }
