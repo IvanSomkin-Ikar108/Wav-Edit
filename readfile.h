@@ -4,9 +4,8 @@
 #include <vector>
 #include <cstdint>
 #include <string>
-#include <fstream>
-#include <stdexcept>
 
-std::vector<uint8_t> readfile(std::string filePath, size_t neededLength);
+std::vector<uint8_t> readfile(const std::string& filePath, size_t neededLength8);
+// throw invalid_argument exception if arguments are incorrect
 
 #endif
