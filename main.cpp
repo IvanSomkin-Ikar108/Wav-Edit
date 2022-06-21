@@ -30,11 +30,11 @@ struct TestFileParams
   }
 };
 
-struct ReadFileParams
+struct PrintHexFileParams
 {
   const char* filePath;
   size_t maxPrintCount;
-  ReadFileParams(const int argc, const char* argv[])
+  PrintHexFileParams(const int argc, const char* argv[])
   {
     if (argc > 2)
     {
@@ -73,7 +73,7 @@ void run_mode_help();
 
 void run_mode_test(TestFileParams& params);
 
-void run_mode_printhex(ReadFileParams& params);
+void run_mode_printhex(PrintHexFileParams& params);
 
 int main(const int argc, const char* argv[]) 
 { 
@@ -93,7 +93,7 @@ int main(const int argc, const char* argv[])
       }
       else if (mode == modes::printhex)
       {
-        ReadFileParams params = ReadFileParams(argc, argv);
+        PrintHexFileParams params = PrintHexFileParams(argc, argv);
         run_mode_printhex(params);
       }
       else
@@ -145,7 +145,7 @@ void run_mode_test(TestFileParams& params)
   }
 }
 
-void run_mode_printhex(ReadFileParams& params)
+void run_mode_printhex(PrintHexFileParams& params)
 {
   try
   {
