@@ -2,7 +2,7 @@
 #include <fstream>
 #include <stdexcept>
 
-std::vector<uint8_t> readfile(const char* filePath, size_t maxByteRead = 0)
+std::vector<uint8_t> readfile(const char* filePath, size_t maxByteRead)
 {
   std::ifstream infile(filePath, std::ios_base::in | std::ios_base::binary);
   if (!infile.is_open())

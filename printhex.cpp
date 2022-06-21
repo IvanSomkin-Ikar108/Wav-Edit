@@ -2,40 +2,40 @@
 #include <iostream>
 #include <iomanip>
 
-void cout_as_hex(uint8_t byte, char separator = '\0')
+void cout_as_hex(uint8_t byte, char separator)
 {
   std::cout << std::hex << std::setfill('0') << std::setw(2) << (int)byte << separator;
 }
 
-void print_as_hex_columns(std::vector<uint8_t>& bytes, size_t columnsCount = 16, size_t maxPrintCount  = 256)
+void print_as_hex_columns(std::vector<uint8_t>& bytes, size_t columnsCount, size_t maxPrintCount)
 {
-    int printLength = maxPrintCount;
-    if (bytes.size() < maxPrintCount)
-    {
-      printLength = bytes.size();
-    }
+  int printLength = maxPrintCount;
+  if (bytes.size() < maxPrintCount)
+  {
+    printLength = bytes.size();
+  }
 
-    int columns = columnsCount;
-    int rows = printLength / columns;
-    int rest = printLength % columns;
-    int i, j, readLength = 0;
+  int columns = columnsCount;
+  int rows = printLength / columns;
+  int rest = printLength % columns;
+  int i, j, readLength = 0;
 
-    for (i = 0; i < rows; i++)
+  for (i = 0; i < rows; i++)
+  {
+    for (j = 0; j < columns - 1; j++)
     {
-      for (j = 0; j < columns - 1; j++)
-      {
-        cout_as_hex(bytes[readLength], ' ');
-        readLength++;
-      }
-      cout_as_hex(bytes[readLength], '\n');
+      cout_as_hex(bytes[readLength], ' ');
+      readLength++;
     }
-    if (rest != 0) 
+    cout_as_hex(bytes[readLength], '\n');
+  }
+  if (rest != 0) 
+  {
+    for (j = 0; j < rest - 1; j++)
     {
-      for (j = 0; j < rest - 1; j++)
-      {
-        cout_as_hex(bytes[readLength], ' ');
-        readLength++;
-      }
-      cout_as_hex(bytes[readLength], '\n');
+      cout_as_hex(bytes[readLength], ' ');
+      readLength++;
     }
+    cout_as_hex(bytes[readLength], '\n');
+  }
 }

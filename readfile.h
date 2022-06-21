@@ -11,6 +11,6 @@
 //
 // Throws std::invalid_argument exception if filePath does not exist
 // Throws std::runtime_error if error while reading file
-std::vector<uint8_t> readfile(const char* filePath, size_t maxByteRead);
+std::vector<uint8_t> readfile(const char* filePath, size_t maxByteRead = 0);
 
 #endif
