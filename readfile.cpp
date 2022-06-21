@@ -2,12 +2,12 @@
 #include <fstream>
 #include <stdexcept>
 
-std::vector<uint8_t> readfile(const std::string& filePath, size_t maxByteRead)
+std::vector<uint8_t> readfile(const char* filePath, size_t maxByteRead = 0)
 {
   std::ifstream infile(filePath, std::ios_base::in | std::ios_base::binary);
   if (!infile.is_open())
   {
-    throw std::invalid_argument("Error: File path (" + filePath + ") could not be opened.");
+    throw std::invalid_argument("Error: File path (" + std::string(filePath) + ") could not be opened.");
   }
 
   infile.seekg(0, std::ios::end);
