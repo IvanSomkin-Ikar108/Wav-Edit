@@ -39,7 +39,7 @@ struct PrintHexFileParams
     if (argc > 2)
     {
       filePath = argv[2];
-      maxPrintCount = 256;     
+      maxPrintCount = 256;
 
       if (argc > 3)
       {
@@ -75,8 +75,8 @@ void run_mode_test(TestFileParams& params);
 
 void run_mode_printhex(PrintHexFileParams& params);
 
-int main(const int argc, const char* argv[]) 
-{ 
+int main(const int argc, const char* argv[])
+{
   if (argc > 1)
   {
     const std::string mode = std::string(argv[1]);
@@ -101,7 +101,7 @@ int main(const int argc, const char* argv[])
         std::cerr << mode << " is an invalid mode. See 'wav-edit.exe help'.";
       }
     }
-    catch(const std::exception& e)
+    catch (const std::exception& e)
     {
       std::cerr << e.what() << '\n';
     }
@@ -115,20 +115,21 @@ int main(const int argc, const char* argv[])
 
 void run_mode_help()
 {
-  std::cout << "USAGE:\n"
-       << "simple-dsp.exe MODE PARAM1 PARAM2 ...\n\n"
+  std::cout
+    << "USAGE:\n"
+    << "simple-dsp.exe MODE PARAM1 PARAM2 ...\n\n"
 
-       << "MODE = help\n"
-       << "    Will print this help\n\n"
+    << "MODE = help\n"
+    << "    Will print this help\n\n"
 
-       << "MODE = test\n"
-       << "    PARAM1 = path to a file\n"
-       << "        Will test if the file is exists\n\n"
+    << "MODE = test\n"
+    << "    PARAM1 = path to a file\n"
+    << "        Will test if the file is exists\n\n"
 
-       << "MODE = printhex\n"
-       << "    PARAM1 = path to a file\n"
-       << "    PARAM2 = number of bytes\n"
-       << "       Print first PARAM2 bytes as hex numbers\n" << std::endl;
+    << "MODE = printhex\n"
+    << "    PARAM1 = path to a file\n"
+    << "    PARAM2 = number of bytes\n"
+    << "       Print first PARAM2 bytes as hex numbers\n" << std::endl;
 }
 
 void run_mode_test(TestFileParams& params)

@@ -29,7 +29,7 @@ void print_as_hex_columns(std::vector<uint8_t>& bytes, size_t columnsCount, size
     }
     cout_as_hex(bytes[readLength], '\n');
   }
-  if (rest != 0) 
+  if (rest != 0)
   {
     for (j = 0; j < rest - 1; j++)
     {

@@ -124,6 +124,8 @@ obj/
 
 ### VisualStudioCode ###
 .vscode/*
+!.vscode/settings.json
+!.vscode/launch.json
 
 # Local History for Visual Studio Code
 .history/

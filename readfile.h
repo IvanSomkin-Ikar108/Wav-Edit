@@ -5,7 +5,6 @@
 #include <cstdint>
 #include <string>
 
-
 // Reads file from filePath into std::vector of bytes.
 // If maxByteRead is more than 0 and less than file size, only reads maxByteRead bytes.
 //
