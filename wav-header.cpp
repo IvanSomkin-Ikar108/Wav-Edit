@@ -21,7 +21,7 @@ uint32_t _2x8_to_16_le(const std::vector<uint8_t> &byte_file, size_t idx)
 
 WavHeader::WavHeader(const std::vector<uint8_t> &byte_file)
 {
-  if (byte_file.size() < 80)
+  if (byte_file.size() < 44)
   {
     throw std::invalid_argument("Error: Bad file - File is too small!");
   }
@@ -39,32 +39,31 @@ WavHeader::WavHeader(const std::vector<uint8_t> &byte_file)
   bytes_per_sec = _4x8_to_32_le(byte_file, 28);
   block_align = _2x8_to_16_le(byte_file, 32);
   bits_per_sample = _2x8_to_16_le(byte_file, 34);
-  extension_size = 0;
+  offset = 36;
 
   if (audio_format != format::WAVE_FORMAT_PCM)
   {
-    extension_size = _2x8_to_16_le(byte_file, 36);
+    extension_size = _2x8_to_16_le(byte_file, offset);
+    if (audio_format == format::WAVE_FORMAT_EXTENSIBLE)
+    {
+      subformat = _2x8_to_16_le(byte_file, offset + 8);
+    }
+    offset += extension_size + 2;
   }
 
-  offset += extension_size;
-
-  fact_size = 0;
-  uint32_t next_subchunk_ID = _4x8_to_32_be(byte_file, 36 + offset);
-  if (next_subchunk_ID == id::fact)
+  uint32_t next_subchunk_ID = 0, next_subchunk_size = 0;
+  while (next_subchunk_ID != id::data && offset < chunk_size)
   {
-    fact_ID = next_subchunk_ID;
-    fact_size = _4x8_to_32_le(byte_file, 36 + offset);
-    sample_length = _4x8_to_32_le(byte_file, 40 + offset);
-    next_subchunk_ID = _4x8_to_32_be(byte_file, 36 + offset + 8 + fact_size);
+    next_subchunk_ID = _4x8_to_32_be(byte_file, offset);
+    next_subchunk_size = _4x8_to_32_le(byte_file, offset + 4);
+    offset += next_subchunk_size + next_subchunk_size % 2 + 8;
   }
-
-  offset += fact_size;
   
   subchunk2_ID = next_subchunk_ID;
-  subchunk2_size = _4x8_to_32_le(byte_file, 40 + offset);
+  subchunk2_size = next_subchunk_size;
 }
 
-WavHeader::WavHeader(const string& filepath) : WavHeader(readfile(filepath, 80)) {}
+WavHeader::WavHeader(const string& filepath) : WavHeader(readfile(filepath)) {}
 
 bool WavHeader::check_validity()
 {
@@ -83,7 +82,7 @@ bool WavHeader::check_validity()
     return false;
   }
 
-  if (20 + subchunk1_size + subchunk2_size + subchunk2_size % 2 != chunk_size)
+  if (bits_per_sample > 64)
   {
     return false;
   }
@@ -109,7 +108,8 @@ uint32_t WavHeader::get_frequency()
   throw std::invalid_argument("Error: Can't read invalid header!");
 }
 
-uint16_t WavHeader::get_depth_bit()
+// Can return 0, if bits_per_sample is not used in format
+uint16_t WavHeader::get_bit_depth()
 {
   if (check_validity())
   {
@@ -118,23 +118,32 @@ uint16_t WavHeader::get_depth_bit()
   throw std::invalid_argument("Error: Can't read invalid header!");
 }
 
-std::string WavHeader::get_samples_type()
+std::string WavHeader::get_sample_type()
 {
   if (check_validity())
   {
-    if (block_align == 2)
+    if (audio_format == format::WAVE_FORMAT_IEEE_FLOAT || subformat == format::WAVE_FORMAT_IEEE_FLOAT)
+    {
+      if (bits_per_sample <= 32)
+      {
+        return "float";
+      }
+      return "double";
+    }
+    if (bits_per_sample <= 8)
+    {
+      return "uint8_t";
+    }
+    if (bits_per_sample <= 16)
     {
       return "uint16_t";
-    }
-    if (block_align == 4)
-    {
-      return "uint32_t";
-    }
+    } 
+    return "uint32_t";
   }
   throw std::invalid_argument("Error: Can't read invalid header!");
 }
 
-uint32_t WavHeader::get_bit_per_second()
+uint32_t WavHeader::get_bits_per_sec()
 {
   if (check_validity())
   {

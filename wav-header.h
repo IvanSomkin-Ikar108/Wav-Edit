@@ -17,11 +17,14 @@ namespace id
 namespace format
 {
   const uint16_t WAVE_FORMAT_PCM        = 0x0001;
-	const uint16_t WAVE_FORMAT_ALAW       = 0x0006;
+  const uint16_t WAVE_FORMAT_IEEE_FLOAT = 0x0003;
+  const uint16_t WAVE_FORMAT_ALAW       = 0x0006;
   const uint16_t WAVE_FORMAT_MULAW      = 0x0007;	
   const uint16_t WAVE_FORMAT_EXTENSIBLE = 0xFFFE;
 }
 
+// Can work incorrectly with GSM 6.10 or other such compressed formats
+// If format doesn't use bits_per_sample, can't calculate bit depth
 class WavHeader
 {
 private:
@@ -36,13 +39,10 @@ private:
   uint16_t num_of_channels;     // Number of channels 1=Mono 2=Sterio
   uint32_t samples_per_sec;     // Sampling Frequency in Hz
   uint32_t bytes_per_sec;       // Bytes per second
-  uint16_t block_align;         // 2=16-bit mono, 4=16-bit stereo
+  uint16_t block_align;         // Bytes per block of samples (sample size * num of channels)
   uint16_t bits_per_sample;     // Number of bits per sample
   uint16_t extension_size = 0;  // Size of extension for non-PCM formats
-  /* The "fact" sub-chunk */
-  uint32_t fact_ID = 0;         // "fact" string
-  uint32_t fact_size = 0;       // Size of the fact chunk
-  uint32_t sample_length = 0;   // Byte length of a sample
+  uint16_t subformat = 0;       // Audio subformat of WAVE_FORMAT_EXTENSIBLE
   /* The "data" sub-chunk */
   uint32_t subchunk2_ID;        // "data" string
   uint32_t subchunk2_size;      // Sampled data length
@@ -53,9 +53,9 @@ public:
   bool check_validity();
   uint16_t get_num_of_channels();
   uint32_t get_frequency();
-  uint16_t get_depth_bit();
-  std::string get_samples_type();
-  uint32_t get_bit_per_second();
+  uint16_t get_bit_depth();
+  std::string get_sample_type();
+  uint32_t get_bits_per_sec();
   double get_length();
 };
 
