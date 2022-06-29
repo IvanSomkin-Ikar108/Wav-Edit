@@ -27,17 +27,17 @@ WavHeader::WavHeader(const std::vector<uint8_t> &byte_file)
   }
 
   size_t offset = 0;
-  chunk_ID = _4x8_to_32_be(byte_file, 0);
+  chunk_ID   = _4x8_to_32_be(byte_file, 0);
   chunk_size = _4x8_to_32_le(byte_file, 4);
-  format = _4x8_to_32_be(byte_file, 8);
+  format     = _4x8_to_32_be(byte_file, 8);
 
-  subchunk1_ID = _4x8_to_32_be(byte_file, 12);
-  subchunk1_size = _4x8_to_32_le(byte_file, 16);
-  audio_format = _2x8_to_16_le(byte_file, 20);
+  subchunk1_ID    = _4x8_to_32_be(byte_file, 12);
+  subchunk1_size  = _4x8_to_32_le(byte_file, 16);
+  audio_format    = _2x8_to_16_le(byte_file, 20);
   num_of_channels = _2x8_to_16_le(byte_file, 22);
   samples_per_sec = _4x8_to_32_le(byte_file, 24);
-  bytes_per_sec = _4x8_to_32_le(byte_file, 28);
-  block_align = _2x8_to_16_le(byte_file, 32);
+  bytes_per_sec   = _4x8_to_32_le(byte_file, 28);
+  block_align     = _2x8_to_16_le(byte_file, 32);
   bits_per_sample = _2x8_to_16_le(byte_file, 34);
   offset = 36;
 
