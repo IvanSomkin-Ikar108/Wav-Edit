@@ -4,4 +4,9 @@ project(wav-edit)
 
 set (CMAKE_CXX_STANDARD 11)
 
-add_executable(wav-edit main.cpp readfile.cpp readfile.h printhex.cpp printhex.h)
+add_executable(wav-edit
+    main.cpp
+    readfile.cpp readfile.h
+    printhex.cpp printhex.h
+    wav-header.cpp wav-header.h
+    )
