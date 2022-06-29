@@ -63,7 +63,7 @@ WavHeader::WavHeader(const std::vector<uint8_t> &byte_file)
   subchunk2_size = next_subchunk_size;
 }
 
-WavHeader::WavHeader(const string& filepath) : WavHeader(readfile(filepath)) {}
+WavHeader::WavHeader(const string& filepath) : WavHeader(readfile(filepath.c_str())) {}
 
 bool WavHeader::check_validity()
 {
