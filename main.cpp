@@ -1,120 +1,109 @@
 #include <iostream>
 #include <string>
-#include <iomanip>
+#include <vector>
 #include <fstream>
 #include <sstream>
+#include <cstdint>
 #include "readfile.h"
-
-using std::cout;
-using std::cerr;
-using std::endl;
-using std::string;
-using std::ifstream;
-using std::stringstream;
+#include "printhex.h"
 
 namespace modes
 {
-  const string help = "help";
-  const string testmode = "testmode";
-  const string printhex = "printhex";
+  const std::string help = "help";
+  const std::string test = "test";
+  const std::string printhex = "printhex";
 }
 
 struct TestFileParams
 {
-  const string& filePath;
-  TestFileParams(const string& filePath):
-    filePath(filePath)
-  {}
-};
-
-struct ReadFileParams
-{
-  const string& filePath;
-  const size_t& maxPrintCount;
-  ReadFileParams(const string& filePath, const size_t& maxPrintCount):
-    filePath(filePath),
-    maxPrintCount(maxPrintCount)
-  {}
-};
-
-void cout_as_hex(uint8_t byte, char separator);
-
-void print_as_hex_columns(std::vector<uint8_t>& bytes, size_t columnsCount = 16, size_t maxPrintCount = 256);
-
-void run_mode_help();
-
-void run_mode_testmode(TestFileParams& params);
-
-void run_mode_printhex(ReadFileParams& params);
-
-int main(int argc, const char* argv[]) 
-{ 
-  if (argc > 1)
+  const char* filePath;
+  TestFileParams(const int argc, const char* argv[])
   {
-    const string mode = string(argv[1]);
-
-    if (mode == modes::help)
+    if (argc > 2)
     {
-      run_mode_help();
+      filePath = argv[2];
     }
-    else if (mode == modes::testmode)
+    else
     {
-      if (argc > 2)
-      {
-        const string filePath = string(argv[2]);
-        TestFileParams params = TestFileParams(filePath);
-        run_mode_testmode(params);
-      }
-      else
-      {
-        cout << "Invalid number of arguments for 'printhex'. Needs filepath.";
-      }
+      throw std::invalid_argument("Invalid number of arguments for 'test'. Needs filepath.");
     }
-    else if (mode == modes::printhex)
+  }
+};
+
+struct PrintHexFileParams
+{
+  const char* filePath;
+  size_t maxPrintCount;
+  PrintHexFileParams(const int argc, const char* argv[])
+  {
+    if (argc > 2)
     {
-      if (argc > 2)
+      filePath = argv[2];
+      maxPrintCount = 256;
+
+      if (argc > 3)
       {
-        const string filePath = string(argv[2]);
-        size_t maxPrintCount = 256; // int
-        bool goodPrintCount = true;
+        int argv3Int;
+        std::stringstream conversion;
+        conversion << argv[3];
+        conversion >> argv3Int;
 
-        if (argc > 3)
+        if (conversion.fail())
         {
-          int argv3Int;
-          stringstream conversion;
-          conversion << argv[3];
-          conversion >> argv3Int;
-
-          if (conversion.fail())
-          {
-            cout << "Invalid maxPrintCount parameter.";
-            goodPrintCount = false;
-          }
-          else if (argv3Int < 1)
-          {
-            cout << "Parameter maxPrintCount should be more than 0.";
-            goodPrintCount = false;
-          }
-          else
-          {
-            maxPrintCount = (size_t)argv3Int;
-          }
+          throw std::invalid_argument("Invalid maxPrintCount parameter.");
         }
-
-        if (goodPrintCount) 
+        else if (argv3Int < 1)
         {
-          ReadFileParams params = ReadFileParams(filePath, maxPrintCount);
-          run_mode_printhex(params); 
+          throw std::invalid_argument("Parameter maxPrintCount should be more than 0.");
         }
-      }
-      else
-      {
-        cout << "Invalid number of arguments for 'printhex'. Needs filepath.";
+        else
+        {
+          maxPrintCount = (size_t)argv3Int;
+        }
       }
     }
     else
     {
-      cout << mode << " is an invalid mode. See 'wav-edit.exe help'.";
+      throw std::invalid_argument("Invalid number of arguments for 'printhex'. Needs filepath, [maxPrintCount].");
+    }
+  }
+};
+
+void run_mode_help();
+
+void run_mode_test(TestFileParams& params);
+
+void run_mode_printhex(PrintHexFileParams& params);
+
+int main(const int argc, const char* argv[])
+{
+  if (argc > 1)
+  {
+    const std::string mode = std::string(argv[1]);
+    try
+    {
+      if (mode == modes::help)
+      {
+        run_mode_help();
+      }
+      else if (mode == modes::test)
+      {
+        TestFileParams params = TestFileParams(argc, argv);
+        run_mode_test(params);
+      }
+      else if (mode == modes::printhex)
+      {
+        PrintHexFileParams params = PrintHexFileParams(argc, argv);
+        run_mode_printhex(params);
+      }
+      else
+      {
+        std::cerr << mode << " is an invalid mode. See 'wav-edit.exe help'.";
+      }
+    }
+    catch (const std::exception& e)
+    {
+      std::cerr << e.what() << '\n';
     }
   }
   else
@@ -126,85 +115,48 @@ int main(int argc, const char* argv[])
 
 void run_mode_help()
 {
-  cout << "USAGE:\n"
-       << "simple-dsp.exe MODE PARAM1 PARAM2 ...\n\n"
+  std::cout
+    << "USAGE:\n"
+    << "simple-dsp.exe MODE PARAM1 PARAM2 ...\n\n"
 
-       << "MODE = help\n"
-       << "    Will print this help\n\n"
+    << "MODE = help\n"
+    << "    Will print this help\n\n"
 
-       << "MODE = testmode\n"
-       << "    PARAM1 = path to a file\n"
-       << "        Will test if the file is exists\n\n"
+    << "MODE = test\n"
+    << "    PARAM1 = path to a file\n"
+    << "        Will test if the file is exists\n\n"
 
-       << "MODE = printhex\n"
-       << "    PARAM1 = path to a file\n"
-       << "    PARAM2 = number of bytes\n"
-       << "       Print first PARAM2 bytes as hex numbers\n" << endl;
+    << "MODE = printhex\n"
+    << "    PARAM1 = path to a file\n"
+    << "    PARAM2 = number of bytes\n"
+    << "       Print first PARAM2 bytes as hex numbers\n" << std::endl;
 }
 
-void run_mode_testmode(TestFileParams& params)
+void run_mode_test(TestFileParams& params)
 {
-  ifstream file(params.filePath.c_str());
+  std::ifstream file(params.filePath);
 
   if (file.good())
   {
-    cout << params.filePath << " exists.";
+    std::cout << params.filePath << " exists.";
   }
   else
   {
-    cout << params.filePath << " does not exist.";
+    std::cout << params.filePath << " does not exist or is not a file.";
   }
 }
 
-void run_mode_printhex(ReadFileParams& params)
+void run_mode_printhex(PrintHexFileParams& params)
 {
   try
   {
     std::vector<uint8_t> bytes = readfile(params.filePath, params.maxPrintCount);
     print_as_hex_columns(bytes, 16, params.maxPrintCount);
-    cout << "File read succesfully.\n";
+    std::cout << "File read succesfully.\n";
   }
   catch (std::exception& e)
   {
-    cerr << e.what() << endl;
-    cout << "File read unsuccesfully.\n";
+    std::cerr << e.what() << std::endl;
+    std::cout << "File read unsuccesfully.\n";
   }
-}
-
-void cout_as_hex(uint8_t byte, char separator)
-{
-  cout << std::hex << std::setfill('0') << std::setw(2) << (int)byte << separator;
-}
-
-void print_as_hex_columns(std::vector<uint8_t>& bytes, size_t columnsCount, size_t maxPrintCount)
-{
-    int printLength = maxPrintCount;
-    if (bytes.size() < maxPrintCount)
-    {
-      printLength = bytes.size();
-    }
-
-    int columns = columnsCount;
-    int rows = printLength / columns;
-    int rest = printLength % columns;
-    int i, j, readLength = 0;
-
-    for (i = 0; i < rows; i++)
-    {
-      for (j = 0; j < columns - 1; j++)
-      {
-        cout_as_hex(bytes[readLength], ' ');
-        readLength++;
-      }
-      cout_as_hex(bytes[readLength], '\n');
-    }
-    if (rest != 0) 
-    {
-      for (j = 0; j < rest - 1; j++)
-      {
-        cout_as_hex(bytes[readLength], ' ');
-        readLength++;
-      }
-      cout_as_hex(bytes[readLength], '\n');
-    }
 }
