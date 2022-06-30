@@ -13,7 +13,7 @@ namespace modes
   const std::string help = "help";
   const std::string test = "test";
   const std::string printhex = "printhex";
-  const std::string print_head = "print_head";
+  const std::string printhead = "printhead";
 }
 
 struct TestFileParams
@@ -73,7 +73,6 @@ struct PrintHexFileParams
 
 struct PrintHeadFileParams{
   const char* filePath;
-  const char* filePath;
   PrintHeadFileParams(const int argc, const char* argv[])
   {
     if (argc > 2)
@@ -93,7 +92,7 @@ void run_mode_test(TestFileParams& params);
 
 void run_mode_printhex(PrintHexFileParams& params);
 
-void run_mode_print_head(PrintHeadFileParams& params);
+void run_mode_printhead(PrintHeadFileParams& params);
 
 int main(const int argc, const char* argv[])
 {
@@ -116,10 +115,10 @@ int main(const int argc, const char* argv[])
         PrintHexFileParams params = PrintHexFileParams(argc, argv);
         run_mode_printhex(params);
       }
-      else if (mode == modes::print_head)
+      else if (mode == modes::printhead)
       {
         PrintHeadFileParams params = PrintHeadFileParams(argc, argv);
-        run_mode_print_head(params);
+        run_mode_printhead(params);
       }
       else
       {
@@ -190,18 +189,18 @@ void run_mode_printhex(PrintHexFileParams& params)
   }
 }
 
-void run_mode_print_head(PrintHeadFileParams& params)
+void run_mode_printhead(PrintHeadFileParams& params)
 {
   try
   {
     WavHeader header = WavHeader(params.filePath);
     if (header.check_validity())
     {
-      std::cout << header.to_string();
+      std::cout << header.to_string() << "\n";
     }
     else
     {
-      std::cout << "It isn't correct .wav file.\n";
+      throw std::invalid_argument("This is not a correct WAV file.\n");
     }
     std::cout << "File read succesfully.\n";
   }

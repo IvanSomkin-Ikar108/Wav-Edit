@@ -3,6 +3,31 @@
 #include "wav-header.h"
 #include "readfile.h"
 
+namespace id
+{
+  const uint32_t RIFF = 0x52494646;
+  const uint32_t WAVE = 0x57415645;
+  const uint32_t fmt  = 0x666D7420;
+  const uint32_t data = 0x64617461;
+  const uint32_t fact = 0x66616374;
+}
+
+namespace format
+{
+  const uint16_t WAVE_FORMAT_PCM        = 0x0001;
+  const uint16_t WAVE_FORMAT_IEEE_FLOAT = 0x0003;
+  const uint16_t WAVE_FORMAT_EXTENSIBLE = 0xFFFE;
+}
+
+namespace type
+{
+  const std::string UINT8_T   = "uint8_t";
+  const std::string UINT16_T  = "uint16_t";
+  const std::string UINT32_T  = "uint32_t";
+  const std::string FLOAT     = "float";
+  const std::string DOUBLE    = "double";
+}
+
 using std::string;
 
 uint32_t _4x8_to_32_be(const std::vector<uint8_t> &byte_file, size_t idx)
@@ -127,19 +152,19 @@ std::string WavHeader::get_sample_type()
     {
       if (bits_per_sample <= 32)
       {
-        return "float";
+        return type::FLOAT;
       }
-      return "double";
+      return type::DOUBLE;
     }
     if (bits_per_sample <= 8)
     {
-      return "uint8_t";
+      return type::UINT8_T;
     }
     if (bits_per_sample <= 16)
     {
-      return "uint16_t";
+      return type::UINT16_T;
     } 
-    return "uint32_t";
+    return type::UINT32_T;
   }
   throw std::invalid_argument("Error: Can't read invalid header!");
 }
@@ -162,8 +187,8 @@ double WavHeader::get_length()
   throw std::invalid_argument("Error: Can't read invalid header!");
 }
 
-std::string to_string(){
-  string
+std::string WavHeader::to_string()
+{
   if (check_validity())
   {
     const char* format;

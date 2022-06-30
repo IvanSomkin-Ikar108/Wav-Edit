@@ -5,24 +5,6 @@
 #include <cstdint>
 #include <vector>
 
-namespace id
-{
-  const uint32_t RIFF = 0x52494646;
-  const uint32_t WAVE = 0x57415645;
-  const uint32_t fmt  = 0x666D7420;
-  const uint32_t data = 0x64617461;
-  const uint32_t fact = 0x66616374;
-}
-
-namespace format
-{
-  const uint16_t WAVE_FORMAT_PCM        = 0x0001;
-  const uint16_t WAVE_FORMAT_IEEE_FLOAT = 0x0003;
-  const uint16_t WAVE_FORMAT_ALAW       = 0x0006;
-  const uint16_t WAVE_FORMAT_MULAW      = 0x0007;	
-  const uint16_t WAVE_FORMAT_EXTENSIBLE = 0xFFFE;
-}
-
 // Can work incorrectly with GSM 6.10 or other such compressed formats
 // If format doesn't use bits_per_sample, can't calculate bit depth
 class WavHeader
