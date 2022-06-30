@@ -191,28 +191,21 @@ std::string WavHeader::to_string()
 {
   if (check_validity())
   {
-    const char* format;
-    switch (audio_format)
-    {
-    case audio_format = 1:
-      format = "PCM";
-      break;
-    case audio_format = 6;
-      format = "mulaw";
-      break;
-    case audio_format = 7;
-      format = "alaw";
-      break;
-    case audio_format = 257;
-      format = "IBM MU-law";
-      break;
-    case audio_format = 6;
-      format = "mulaw";
-      break;    
-    default:
-      break;
-    }
     std::stringstream str;
+    str << "RIFF chunk size: "            << chunk_size      << "\n"
+        << "FMT  subchunk size: "         << subchunk1_size  << "\n"
+        << "Audio compression format: "   << audio_format    << "\n"
+        << "Number of channels: "         << num_of_channels << "\n"
+        << "Sampling frequency in Hz: "   << samples_per_sec << "\n"
+        << "Bytes per second: "           << bytes_per_sec   << "\n" 
+        << "Bytes per block of samples: " << block_align     << "\n"
+        << "Number of bits per sample: "  << bits_per_sample << "\n" 
+        << "Size of extension for non-PCM formats: "
+                                          << extension_size  << "\n" 
+        << "Audio subformat of extensible format: "
+                                          << subformat       << "\n"
+        << "Sampled data length: "        << subchunk2_size  << "\n";
+    return str.str(); 
   }
   throw std::invalid_argument("Error: Can't read invalid header!");
 }
