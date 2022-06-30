@@ -1,4 +1,5 @@
 #include <iostream>
+#include <sstream>
 #include "wav-header.h"
 #include "readfile.h"
 
@@ -157,6 +158,36 @@ double WavHeader::get_length()
   if (check_validity())
   {
     return double(subchunk2_size) / double(bytes_per_sec);
+  }
+  throw std::invalid_argument("Error: Can't read invalid header!");
+}
+
+std::string to_string(){
+  string
+  if (check_validity())
+  {
+    const char* format;
+    switch (audio_format)
+    {
+    case audio_format = 1:
+      format = "PCM";
+      break;
+    case audio_format = 6;
+      format = "mulaw";
+      break;
+    case audio_format = 7;
+      format = "alaw";
+      break;
+    case audio_format = 257;
+      format = "IBM MU-law";
+      break;
+    case audio_format = 6;
+      format = "mulaw";
+      break;    
+    default:
+      break;
+    }
+    std::stringstream str;
   }
   throw std::invalid_argument("Error: Can't read invalid header!");
 }

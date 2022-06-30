@@ -6,12 +6,14 @@
 #include <cstdint>
 #include "readfile.h"
 #include "printhex.h"
+#include "wav-header.h"
 
 namespace modes
 {
   const std::string help = "help";
   const std::string test = "test";
   const std::string printhex = "printhex";
+  const std::string print_head = "print_head";
 }
 
 struct TestFileParams
@@ -69,11 +71,29 @@ struct PrintHexFileParams
   }
 };
 
+struct PrintHeadFileParams{
+  const char* filePath;
+  const char* filePath;
+  PrintHeadFileParams(const int argc, const char* argv[])
+  {
+    if (argc > 2)
+    {
+      filePath = argv[2];
+    }
+    else
+    {
+      throw std::invalid_argument("Invalid number of arguments for 'print_head'. Needs filepath.");
+    }
+  }
+};
+
 void run_mode_help();
 
 void run_mode_test(TestFileParams& params);
 
 void run_mode_printhex(PrintHexFileParams& params);
+
+void run_mode_print_head(PrintHeadFileParams& params);
 
 int main(const int argc, const char* argv[])
 {
@@ -95,6 +115,11 @@ int main(const int argc, const char* argv[])
       {
         PrintHexFileParams params = PrintHexFileParams(argc, argv);
         run_mode_printhex(params);
+      }
+      else if (mode == modes::print_head)
+      {
+        PrintHeadFileParams params = PrintHeadFileParams(argc, argv);
+        run_mode_print_head(params);
       }
       else
       {
@@ -126,6 +151,10 @@ void run_mode_help()
     << "    PARAM1 = path to a file\n"
     << "        Will test if the file is exists\n\n"
 
+    << "MODE = print_head\n"
+    << "    PARAM1 = path to a file\n"
+    << "        Print header of .WAV file\n\n"
+
     << "MODE = printhex\n"
     << "    PARAM1 = path to a file\n"
     << "    PARAM2 = number of bytes\n"
@@ -152,6 +181,28 @@ void run_mode_printhex(PrintHexFileParams& params)
   {
     std::vector<uint8_t> bytes = readfile(params.filePath, params.maxPrintCount);
     print_as_hex_columns(bytes, 16, params.maxPrintCount);
+    std::cout << "File read succesfully.\n";
+  }
+  catch (std::exception& e)
+  {
+    std::cerr << e.what() << std::endl;
+    std::cout << "File read unsuccesfully.\n";
+  }
+}
+
+void run_mode_print_head(PrintHeadFileParams& params)
+{
+  try
+  {
+    WavHeader header = WavHeader(params.filePath);
+    if (header.check_validity())
+    {
+      std::cout << header.to_string();
+    }
+    else
+    {
+      std::cout << "It isn't correct .wav file.\n";
+    }
     std::cout << "File read succesfully.\n";
   }
   catch (std::exception& e)

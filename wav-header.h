@@ -57,6 +57,7 @@ public:
   std::string get_sample_type();
   uint32_t get_bits_per_sec();
   double get_length();
+  std::string to_string();
 };
 
 #endif
