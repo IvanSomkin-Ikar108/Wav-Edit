@@ -28,8 +28,6 @@ private:
   /* The "data" sub-chunk */
   uint32_t subchunk2_ID;        // "data" string
   uint32_t subchunk2_size;      // Sampled data length
-  /*Special variables*/
-  uint32_t data_offset;         //Offset to data chunk
   
 public:
   WavHeader(const std::vector<uint8_t> &byte_file);
@@ -40,11 +38,7 @@ public:
   uint16_t get_bit_depth();
   std::string get_sample_type();
   uint32_t get_bits_per_sec();
-  uint32_t get_length_ms();
-  uint32_t get_data_offset();
-  uint32_t get_data_size();
-  uint32_t get_file_size();
-  uint16_t get_block_align();
+  double get_length();
   std::string to_string();
 };
 

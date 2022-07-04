@@ -7,7 +7,6 @@
 #include "readfile.h"
 #include "printhex.h"
 #include "wav-header.h"
-#include "sound-effects.h"
 
 namespace modes
 {
@@ -15,74 +14,7 @@ namespace modes
   const std::string test = "test";
   const std::string printhex = "printhex";
   const std::string printhead = "printhead";
-  const std::string cut = "cut";
-  const std::string levels = "levels";
-  const std::string reverb = "reverb";
 }
-
-int32_t cstr_to_int(const char* cstr)
-{
-  int32_t cstr_int;
-  std::stringstream conversion;
-  conversion << cstr;
-  conversion >> cstr_int;
-
-  if (conversion.fail())
-  {
-    throw std::invalid_argument("Could not covvert " + std::string(cstr) + " to int.");
-  }
-
-  return cstr_int;
-}
-
-struct CutFileParams
-{
-  const char* filePath;
-  uint32_t start_ms, end_ms;
-  bool end_flag = false;
-
-  CutFileParams(const int argc, const char* argv[])
-  {
-    int32_t start, end;
-    if (argc > 3)
-    {
-      filePath = argv[2];
-
-      start = cstr_to_int(argv[3]);
-
-      if (start < 0)
-      {
-        throw std::invalid_argument("Start parameter must be positive or zero.");
-      }
-
-      if (argc > 4)
-      { 
-        end_flag = true;
-        end = cstr_to_int(argv[4]);
-
-        if (end < 0)
-        {
-          throw std::invalid_argument("End parameter must be positive or zero.");
-        }
-
-        if (start > end)
-        {
-          throw std::invalid_argument("Start parameter must be greater than or equal to end parameter.");
-        }
-      }
-      start_ms = start;
-      end_ms = end;
-    }
-    else
-    {
-      throw std::invalid_argument("Invalid number of arguments for 'cut'. Needs filepath, start, [end].");
-    }
-  }
-};
-
-struct LevelsFileParams{};
-
-struct ReverbFileParams{};
 
 struct TestFileParams
 {
@@ -162,12 +94,6 @@ void run_mode_printhex(PrintHexFileParams& params);
 
 void run_mode_printhead(PrintHeadFileParams& params);
 
-void run_mode_cut(CutFileParams& params);
-
-void run_mode_levels(LevelsFileParams& params);
-
-void run_mode_reverb(ReverbFileParams& params);
-
 int main(const int argc, const char* argv[])
 {
   if (argc > 1)
@@ -193,21 +119,6 @@ int main(const int argc, const char* argv[])
       {
         PrintHeadFileParams params = PrintHeadFileParams(argc, argv);
         run_mode_printhead(params);
-      }
-      else if (mode == modes::cut)
-      {
-        CutFileParams params = CutFileParams(argc, argv);
-        run_mode_cut(params);
-      }
-      else if (mode == modes::levels)
-      {
-        LevelsFileParams params = LevelsFileParams(argc, argv);
-        run_mode_levels(params);
-      }
-      else if (mode == modes::reverb)
-      {
-        ReverbFileParams params = ReverbFileParams(argc, argv);
-        run_mode_reverb(params);
       }
       else
       {
@@ -243,18 +154,6 @@ void run_mode_help()
     << "    PARAM1 = path to a file\n"
     << "        Print header of .WAV file\n\n"
 
-    << "MODE = cut\n"
-    << "    PARAM1 = path to a file\n"
-    << "        Print header of .WAV file\n\n"
-
-    << "MODE = levels\n"
-    << "    PARAM1 = path to a file\n"
-    << "        Print header of .WAV file\n\n"
-
-    << "MODE = reverb\n"
-    << "    PARAM1 = path to a file\n"
-    << "        Print header of .WAV file\n\n"
-
     << "MODE = printhex\n"
     << "    PARAM1 = path to a file\n"
     << "    PARAM2 = number of bytes\n"
@@ -281,10 +180,12 @@ void run_mode_printhex(PrintHexFileParams& params)
   {
     std::vector<uint8_t> bytes = readfile(params.filePath, params.maxPrintCount);
     print_as_hex_columns(bytes, 16, params.maxPrintCount);
+    std::cout << "File read succesfully.\n";
   }
   catch (std::exception& e)
   {
     std::cerr << e.what() << std::endl;
+    std::cout << "File read unsuccesfully.\n";
   }
 }
 
@@ -301,70 +202,11 @@ void run_mode_printhead(PrintHeadFileParams& params)
     {
       throw std::invalid_argument("This is not a correct WAV file.\n");
     }
+    std::cout << "File read succesfully.\n";
   }
   catch (std::exception& e)
   {
     std::cerr << e.what() << std::endl;
+    std::cout << "File read unsuccesfully.\n";
   }
 }
-
-void run_mode_cut(CutFileParams& params)
-{
-  try
-  {
-    std::vector<uint8_t> bytes = readfile(params.filePath);
-
-    if (params.end_flag)
-    {
-      effects::cut(bytes, params.start_ms, params.end_ms);
-    }
-    else
-    {
-      effects::cut(bytes, params.start_ms);
-    }
-  }
-  catch (std::exception& e)
-  {
-    std::cerr << e.what() << std::endl;
-  }
-};
-
-void run_mode_levels(LevelsFileParams& params)
-{
-  try
-  {
-    WavHeader header = WavHeader(params.filePath);
-    if (header.check_validity())
-    {
-      std::cout << header.to_string() << "\n";
-    }
-    else
-    {
-      throw std::invalid_argument("This is not a correct WAV file.\n");
-    }
-  }
-  catch (std::exception& e)
-  {
-    std::cerr << e.what() << std::endl;
-  }
-};
-
-void run_mode_reverb(ReverbFileParams& params)
-{
-  try
-  {
-    WavHeader header = WavHeader(params.filePath);
-    if (header.check_validity())
-    {
-      std::cout << header.to_string() << "\n";
-    }
-    else
-    {
-      throw std::invalid_argument("This is not a correct WAV file.\n");
-    }
-  }
-  catch (std::exception& e)
-  {
-    std::cerr << e.what() << std::endl;
-  }
-};
