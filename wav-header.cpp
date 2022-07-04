@@ -125,6 +125,15 @@ bool WavHeader::check_validity()
   return true;
 }
 
+uint16_t WavHeader::get_audio_format()
+{
+  if (audio_format != format::WAVE_FORMAT_EXTENSIBLE)
+  {
+    return audio_format;
+  }
+  return subformat;
+}
+
 uint16_t WavHeader::get_num_of_channels()
 {
  return num_of_channels; 

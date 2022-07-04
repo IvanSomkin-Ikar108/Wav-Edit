@@ -14,7 +14,7 @@ private:
   uint32_t chunk_ID;            // RIFF Header Magic header
   uint32_t chunk_size;          // RIFF Chunk Size
   uint32_t format;              // "WAVE" string
-  /* The "fmt" sub-chunk */
+  /* The "fmt " sub-chunk */
   uint32_t subchunk1_ID;        // "fmt " string
   uint32_t subchunk1_size;      // Size of the fmt chunk
   uint16_t audio_format;        // Audio format 1=PCM, 6=mulaw, 7=alaw, 257=IBM Mu-Law, 258=IBM A-Law, 259=ADPCM
@@ -35,6 +35,7 @@ public:
   WavHeader(const std::vector<uint8_t> &byte_file);
   WavHeader(const std::string &filepath);
   bool check_validity();
+  uint16_t get_audio_format();
   uint16_t get_num_of_channels();
   uint32_t get_frequency();
   uint16_t get_bit_depth();
