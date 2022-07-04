@@ -4,6 +4,7 @@
 #include <fstream>
 #include <sstream>
 #include <cstdint>
+#include <sys/stat.h>
 #include "readfile.h"
 #include "printhex.h"
 #include "wav-header.h"
@@ -154,6 +155,8 @@ struct PrintHeadFileParams{
   }
 };
 
+bool fileExists();
+
 void run_mode_help();
 
 void run_mode_test(TestFileParams& params);
@@ -199,7 +202,7 @@ int main(const int argc, const char* argv[])
         CutFileParams params = CutFileParams(argc, argv);
         run_mode_cut(params);
       }
-      else if (mode == modes::levels)
+      /* else if (mode == modes::levels)
       {
         LevelsFileParams params = LevelsFileParams(argc, argv);
         run_mode_levels(params);
@@ -208,7 +211,7 @@ int main(const int argc, const char* argv[])
       {
         ReverbFileParams params = ReverbFileParams(argc, argv);
         run_mode_reverb(params);
-      }
+      }*/
       else
       {
         std::cerr << mode << " is an invalid mode. See 'wav-edit.exe help'.";
@@ -225,6 +228,23 @@ int main(const int argc, const char* argv[])
   }
   return 0;
 }
+
+bool fileExists(const std::string& filename)
+{
+    struct stat buf;
+    if (stat(filename.c_str(), &buf) != -1)
+    {
+        return true;
+    }
+    return false;
+}
+
+/*
+./wav-edit.exe printhex [-c 200] file1
+./wav-edit.exe cut -s 100 [-e 200] file1 [file2]
+./wav-edit.exe levels -s 1000 -e 2152 file1 [file2]
+./wav-edit.exe reverb -dl 10 -dc 0.1 file1 [file2]
+*/
 
 void run_mode_help()
 {
@@ -328,7 +348,7 @@ void run_mode_cut(CutFileParams& params)
     std::cerr << e.what() << std::endl;
   }
 };
-
+/*
 void run_mode_levels(LevelsFileParams& params)
 {
   try
@@ -368,3 +388,4 @@ void run_mode_reverb(ReverbFileParams& params)
     std::cerr << e.what() << std::endl;
   }
 };
+*/

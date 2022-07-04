@@ -1,5 +1,6 @@
 #include <iostream>
 #include <sstream>
+#include <stdexcept>
 #include "wav-header.h"
 #include "readfile.h"
 
@@ -176,7 +177,7 @@ uint32_t WavHeader::get_data_offset()
   return data_offset; 
 }
 
-uint32_t WavHeader::get_data_offset()
+uint32_t WavHeader::get_data_size()
 {
   return subchunk2_size; 
 }
