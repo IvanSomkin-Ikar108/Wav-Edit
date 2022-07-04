@@ -26,7 +26,7 @@ T read_from_bytes (std::vector<uint8_t>& bytes, uint32_t pos)
 }
 
 template<typename T>
-void level(std::vector<uint8_t>& bytes, WavHeader& header, uint32_t start_ms, uint32_t end_ms, double level)
+void level(std::vector<uint8_t>& bytes, WavHeader& header, uint32_t start_ms, uint32_t end_ms, double levels)
 {  
   uint32_t data_offset   = header.get_data_offset();
   uint16_t channel_count = header.get_num_of_channels();
@@ -35,7 +35,7 @@ void level(std::vector<uint8_t>& bytes, WavHeader& header, uint32_t start_ms, ui
   uint32_t start_offset = data_offset + ms_to_bytes(header, start_ms);
   uint32_t end_offset   = data_offset + ms_to_bytes(header, end_ms);
 
-  double step_lenght = ((1.f - level) * static_cast<double>(block_align)
+  double step_lenght = ((1.f - levels) * static_cast<double>(block_align)
                                      / static_cast<double>(end_offset - start_offset));
   double step, revers;
   if (start_offset < end_offset)
@@ -103,30 +103,36 @@ void effects::cut(std::vector<uint8_t>& bytes, uint32_t start_ms)
   cut(bytes, start_ms, header.get_length_ms());
 };
 
-void effects::levels(std::vector<uint8_t>& bytes, uint32_t start_ms, uint32_t end_ms, double level)
+void effects::levels(std::vector<uint8_t>& bytes, uint32_t start_ms, uint32_t end_ms, double levels)
 {
   WavHeader header = WavHeader(bytes);
   uint16_t sample_size = header.get_block_align() / header.get_num_of_channels();
 
-  level<double>(bytes, header, start_ms, end_ms, level);
-
+  level<uint16_t>(bytes, header, start_ms, end_ms, levels);
   switch (sample_size)
   {
   case 1:
-    //level<uint8_t>(bytes, header, start_ms, end_ms, level);
+    level<uint8_t>(bytes, header, start_ms, end_ms, levels);
+    break;
+  
+  case 2:
+    level<uint16_t>(bytes, header, start_ms, end_ms, levels);
     break;
   
   case 4:
     if (header.get_audio_format() !=3)
     {
-      //level<uint32_t>(bytes, header, start_ms, end_ms, level);
+      level<uint32_t>(bytes, header, start_ms, end_ms, levels);
+    }
+    else
+    {
+      level<float>(bytes, header, start_ms, end_ms, levels);
     }
     break;
   
   default:
     break;
-  }
-  
+  } 
 };
 
 void effects::reverb(std::vector<uint8_t>& bytes, size_t columnsCount = 16, size_t maxPrintCount = 256)
