@@ -30,9 +30,25 @@ T read_from_bytes (std::vector<uint8_t>& bytes, uint32_t pos)
   return val;
 }
 
-struct FadeAway {
+struct Effect
+{
+  std::vector<uint8_t>& bytes;
+  WavHeader& header;
+  template<typename T> void effect();
+  Effect(std::vector<uint8_t>& bytes, WavHeader& header):
+    bytes(bytes), header(header)
+  {}
+};
+
+struct FadeAway : Effect 
+{
+  FadeOptions& options;
+  FadeAway(std::vector<uint8_t>& bytes, WavHeader& header, FadeOptions& options):
+    Effect(bytes, header), options(options)
+  {}
+
   template<typename T>
-  void operator() (std::vector<uint8_t>& bytes, WavHeader& header, FadeOptions& options)
+  void effect()
   {  
     uint32_t data_offset   = header.get_data_offset();
     uint16_t block_align   = header.get_block_align();
@@ -69,9 +85,15 @@ struct FadeAway {
   }
 };
 
-struct Reverberation {
-  template<typename T>
-  void operator() (std::vector<uint8_t>& bytes, WavHeader& header, ReverbOptions& options) {
+struct Reverberation : Effect{
+  ReverbOptions& options;
+  Reverberation(std::vector<uint8_t>& bytes, WavHeader& header, ReverbOptions& options):
+    Effect(bytes, header), options(options)
+  {}
+
+  template <typename T>
+  void effect()
+  {  
     uint32_t delay = ms_to_bytes(header,options.delay_ms);
 
     uint16_t block_align = header.get_block_align();
@@ -97,41 +119,38 @@ struct Reverberation {
   }
 };
 
-template<typename T, typename F>
-void sample_type_selector (std::vector<uint8_t>& bytes, T& options)
+void sample_type_selector (Effect& effect)
 {
-  WavHeader header = WavHeader(bytes);
-  uint16_t sample_size = header.get_block_align() / header.get_num_of_channels();
-  
+  uint16_t sample_size = effect.header.get_block_align() / effect.header.get_num_of_channels();
   switch (sample_size)
   {
   case 1:
-    F<uint8_t>(bytes, header, options);
+    effect.effect<uint8_t>();
     break;
   
   case 2:
-    F<uint16_t>(bytes, header, options);
+    effect.effect<uint16_t>();
     break;
   
   case 4:
-    if (header.get_audio_format() != format::WAVE_FORMAT_IEEE_FLOAT)
+    if (effect.header.get_audio_format() != format::WAVE_FORMAT_IEEE_FLOAT)
     {
-      F<uint32_t>(bytes, header, options);
+      effect.effect<uint32_t>();
     }
     else
     {
-      F<float>(bytes, header, options);
+      effect.effect<float>();
     }
     break;
   
   case 8:
-    if (header.get_audio_format() != format::WAVE_FORMAT_IEEE_FLOAT)
+    if (effect.header.get_audio_format() != format::WAVE_FORMAT_IEEE_FLOAT)
     {
-      F<uint64_t>(bytes, header, options);
+      effect.effect<uint64_t>();
     }
     else
     {
-      F<double>(bytes, header, options);
+      effect.effect<double>();
     }
 
   default:
@@ -171,10 +190,14 @@ void effects::trim(std::vector<uint8_t>& bytes, TrimOptions& options)
 
 void effects::fade(std::vector<uint8_t>& bytes, FadeOptions& options)
 {
-  sample_type_selector<FadeOptions,FadeAway>(bytes,options);
+  WavHeader header = WavHeader(bytes);
+  FadeAway effect = FadeAway(bytes, header, options);
+  sample_type_selector(effect);
 };
 
 void effects::reverb(std::vector<uint8_t>& bytes, ReverbOptions& options)
 {
-  sample_type_selector<ReverbOptions,Reverberation>(bytes,options);
+  WavHeader header = WavHeader(bytes);
+  Reverberation effect = Reverberation(bytes, header, options);
+  sample_type_selector(effect);
 };
