@@ -1,11 +1,11 @@
 #include <iostream>
 #include <string>
 #include <vector>
-#include <fstream>
 #include <sstream>
 #include <cstdint>
 #include <sys/stat.h>
 #include "readfile.h"
+#include "writefile.h"
 #include "printhex.h"
 #include "wav-header.h"
 #include "sound-effects.h"
@@ -13,11 +13,10 @@
 namespace modes
 {
   const std::string help = "help";
-  const std::string test = "test";
-  const std::string printhex = "printhex";
-  const std::string printhead = "printhead";
-  const std::string cut = "cut";
-  const std::string levels = "levels";
+  const std::string hex = "hex";
+  const std::string info = "info";
+  const std::string trim = "trim";
+  const std::string fade = "fade";
   const std::string reverb = "reverb";
 }
 
@@ -30,146 +29,243 @@ int32_t cstr_to_int(const char* cstr)
 
   if (conversion.fail())
   {
-    throw std::invalid_argument("Could not covvert " + std::string(cstr) + " to int.");
+    throw std::invalid_argument("Could not convert " + std::string(cstr) + " to int.");
   }
 
   return cstr_int;
 }
 
-struct CutFileParams
+bool file_exists(const char* file_path)
 {
-  const char* filePath;
-  uint32_t start_ms, end_ms;
-  bool end_flag = false;
-
-  CutFileParams(const int argc, const char* argv[])
-  {
-    int32_t start, end;
-    if (argc > 3)
+    struct stat buf;
+    if (stat(file_path, &buf) != -1)
     {
-      filePath = argv[2];
+        return true;
+    }
+    return false;
+}
 
-      start = cstr_to_int(argv[3]);
+bool check_for_replace_dialogue(const char* file_path)
+{
+  if (file_exists(file_path))
+  {
+    std::string answer;
+    std::cout << "File " << file_path << " already exists. Would you like to replace it (y/n)?: ";
+    std::getline(std::cin, answer);
+    if (answer == std::string("n") || answer == std::string("N"))
+    {
+      return false;
+    }
+  }
+  return true;
+}
 
-      if (start < 0)
+
+const char* get_infile_path(const int argc, const char* argv[])
+{
+  if (argc < 3)
+  {
+    throw std::invalid_argument("Error: No input file passed.");
+  }
+  
+  const char* infile_path = argv[2];
+
+  if (!file_exists(infile_path))
+  {
+    throw std::invalid_argument("Error: Input file does not exist.");
+  }
+
+  return infile_path;
+}
+
+struct InfoOptions{
+  const char* file_path;
+  InfoOptions(const int argc, const char* argv[])
+  {
+    if (argc > 2)
+    {
+      file_path = argv[2];
+    }
+    else
+    {
+      throw std::invalid_argument("Error: No input file passed.");
+    }
+  }
+};
+
+struct HexOptions
+{
+  const char* file_path;
+  size_t max_print_count;
+  HexOptions(const int argc, const char* argv[])
+  {
+    if (argc < 3)
+    {
+      throw std::invalid_argument("Error: No input file passed.");
+    }
+
+    file_path = argv[2];
+    max_print_count = 256;
+
+    if (argc > 4 && std::string(argv[3]) == std::string("-c"))
+    {
+      int32_t max_print_arg = cstr_to_int(argv[4]);
+      if (max_print_arg < 1)
       {
-        throw std::invalid_argument("Start parameter must be positive or zero.");
+        throw std::invalid_argument("Error: Parameter max_print_count should be more than 0.");
       }
+      else
+      {
+        max_print_count = (size_t)max_print_arg;
+      }
+    }
+  }
+};
 
-      if (argc > 4)
-      { 
+TrimOptions::TrimOptions(const int argc, const char* argv[])
+{    
+  int32_t start_arg = 0, end_arg, idx = 3;
+  while (idx < argc && argv[idx][0] == '-')
+  {
+    switch (argv[idx][1])
+    {
+      case 's':
+        start_arg = cstr_to_int(argv[idx + 1]);
+        if (start_arg < 0)
+        {
+          throw std::invalid_argument("Error: Start point (-s) should be positive or zero.");
+        }
+        start_ms = (uint32_t)start_arg;
+        break;
+
+      case 'e':
         end_flag = true;
-        end = cstr_to_int(argv[4]);
-
-        if (end < 0)
+        end_arg = cstr_to_int(argv[idx + 1]);
+        if (end_arg < 0)
         {
-          throw std::invalid_argument("End parameter must be positive or zero.");
+          throw std::invalid_argument("Error: End point (-e) should be positive or zero.");
         }
+        end_ms = (uint32_t)end_arg;
+        break;
 
-        if (start > end)
-        {
-          throw std::invalid_argument("Start parameter must be greater than or equal to end parameter.");
-        }
-      }
-      start_ms = start;
-      end_ms = end;
+      case 'o':
+        out_flag = true;
+        outfile_path = argv[idx + 1];
+        break;
+
+      default:
+        throw std::invalid_argument("Error: Invalid option -" + std::to_string(argv[idx][1]) + " for 'trim' mode.");
     }
-    else
-    {
-      throw std::invalid_argument("Invalid number of arguments for 'cut'. Needs filepath, start, [end].");
-    }
+    idx += 2;
   }
-};
+  if (idx != argc)
+  {
+    throw std::invalid_argument("Error: Invalid options format.");
+  }
+  if (end_flag && start_arg > end_arg)
+  {
+    throw std::invalid_argument("Error: Start point (-s) must be lesser than or equal to end point (-e).");
+  }
+}
 
-struct LevelsFileParams{};
-
-struct ReverbFileParams{};
-
-struct TestFileParams
+FadeOptions::FadeOptions(const int argc, const char* argv[])
 {
-  const char* filePath;
-  TestFileParams(const int argc, const char* argv[])
+  int32_t start_arg = 0, end_arg = 0, idx = 3;
+  while (idx < argc && argv[idx][0] == '-')
   {
-    if (argc > 2)
+    switch (argv[idx][1])
     {
-      filePath = argv[2];
-    }
-    else
-    {
-      throw std::invalid_argument("Invalid number of arguments for 'test'. Needs filepath.");
-    }
-  }
-};
+      case 's':
+        start_arg = cstr_to_int(argv[idx + 1]);
+        if (start_arg < 0)
+        {
+          throw std::invalid_argument("Error: Start point (-s) should be positive or zero.");
+        }
+        start_ms = (uint32_t)start_arg;
+        break;
 
-struct PrintHexFileParams
+      case 'e':
+        end_flag = true;
+        end_arg = cstr_to_int(argv[idx + 1]);
+        if (end_arg < 0)
+        {
+          throw std::invalid_argument("Error: End point (-e) should be positive or zero.");
+        }
+        break;
+
+      case 'l':
+        end_lvl_01 = cstr_to_int(argv[idx + 1]);
+        if (end_lvl_01 < 0 || end_lvl_01 > 1)
+        {
+          throw std::invalid_argument("Error: End volume level (-e) should be a float from 0 to 1.");
+        }
+        end_ms = (uint32_t)end_arg;
+        break;
+
+      case 'o':
+        out_flag = true;
+        outfile_path = argv[idx + 1];
+        break;
+
+      default:
+        throw std::invalid_argument("Error: Invalid option -" + std::to_string(argv[idx][1]) + " for 'cut' mode.");
+    }
+    idx += 2;
+  }
+  if (idx != argc)
+  {
+    throw std::invalid_argument("Error: Invalid options format.");
+  }    
+}
+
+ReverbOptions::ReverbOptions(const int argc, const char* argv[])
 {
-  const char* filePath;
-  size_t maxPrintCount;
-  PrintHexFileParams(const int argc, const char* argv[])
+  int32_t delay_arg, idx = 3;
+  while (idx < argc && argv[idx][0] == '-')
   {
-    if (argc > 2)
+    switch (argv[idx][1])
     {
-      filePath = argv[2];
-      maxPrintCount = 256;
+      case 'd':
+        delay_arg = cstr_to_int(argv[idx + 1]);
+        if (delay_arg < 0)
+        {
+          throw std::invalid_argument("Error: Delay time (-s) should be positive or zero.");
+        }
+        break;
 
-      if (argc > 3)
-      {
-        int argv3Int;
-        std::stringstream conversion;
-        conversion << argv[3];
-        conversion >> argv3Int;
+      case 'k':
+        decay_01 = cstr_to_int(argv[idx + 1]);
+        if (decay_01 < 0 || decay_01 > 1)
+        {
+          throw std::invalid_argument("Error: Decay coefficient (-e) should be a float from 0 to 1.");
+        }
+        delay_ms = (uint32_t)delay_arg;
+        break;
 
-        if (conversion.fail())
-        {
-          throw std::invalid_argument("Invalid maxPrintCount parameter.");
-        }
-        else if (argv3Int < 1)
-        {
-          throw std::invalid_argument("Parameter maxPrintCount should be more than 0.");
-        }
-        else
-        {
-          maxPrintCount = (size_t)argv3Int;
-        }
-      }
+      case 'o':
+        out_flag = true;
+        outfile_path = argv[idx + 1];
+        break;
+
+      default:
+        throw std::invalid_argument("Error: Invalid option -" + std::to_string(argv[idx][1]) + " for 'cut' mode.");
     }
-    else
-    {
-      throw std::invalid_argument("Invalid number of arguments for 'printhex'. Needs filepath, [maxPrintCount].");
-    }
+    idx += 2;
   }
-};
-
-struct PrintHeadFileParams{
-  const char* filePath;
-  PrintHeadFileParams(const int argc, const char* argv[])
+  if (idx != argc)
   {
-    if (argc > 2)
-    {
-      filePath = argv[2];
-    }
-    else
-    {
-      throw std::invalid_argument("Invalid number of arguments for 'print_head'. Needs filepath.");
-    }
-  }
-};
-
-bool fileExists();
+    throw std::invalid_argument("Error: Invalid options format.");
+  } 
+}
 
 void run_mode_help();
 
-void run_mode_test(TestFileParams& params);
+void run_mode_info(const char* infile_path, InfoOptions& options);
 
-void run_mode_printhex(PrintHexFileParams& params);
+void run_mode_hex(const char* infile_path, HexOptions& options);
 
-void run_mode_printhead(PrintHeadFileParams& params);
-
-void run_mode_cut(CutFileParams& params);
-
-void run_mode_levels(LevelsFileParams& params);
-
-void run_mode_reverb(ReverbFileParams& params);
+template <typename T>
+void run_mode_effect(const char* infile_path, T& options);
 
 int main(const int argc, const char* argv[])
 {
@@ -182,39 +278,39 @@ int main(const int argc, const char* argv[])
       {
         run_mode_help();
       }
-      else if (mode == modes::test)
+      else if (mode == modes::info)
       {
-        TestFileParams params = TestFileParams(argc, argv);
-        run_mode_test(params);
+        const char* infile_path = get_infile_path(argc, argv);
+        InfoOptions options = InfoOptions(argc, argv);
+        run_mode_info(infile_path, options);
       }
-      else if (mode == modes::printhex)
+      else if (mode == modes::hex)
       {
-        PrintHexFileParams params = PrintHexFileParams(argc, argv);
-        run_mode_printhex(params);
+        const char* infile_path = get_infile_path(argc, argv);
+        HexOptions options = HexOptions(argc, argv);
+        run_mode_hex(infile_path, options);
       }
-      else if (mode == modes::printhead)
+      else if (mode == modes::trim)
       {
-        PrintHeadFileParams params = PrintHeadFileParams(argc, argv);
-        run_mode_printhead(params);
+        const char* infile_path = get_infile_path(argc, argv);
+        TrimOptions options = TrimOptions(argc, argv);
+        run_mode_effect<TrimOptions>(infile_path, options);
       }
-      else if (mode == modes::cut)
+      else if (mode == modes::fade)
       {
-        CutFileParams params = CutFileParams(argc, argv);
-        run_mode_cut(params);
-      }
-      /* else if (mode == modes::levels)
-      {
-        LevelsFileParams params = LevelsFileParams(argc, argv);
-        run_mode_levels(params);
+        const char* infile_path = get_infile_path(argc, argv);
+        FadeOptions options = FadeOptions(argc, argv);
+        run_mode_effect<FadeOptions>(infile_path, options);
       }
       else if (mode == modes::reverb)
       {
-        ReverbFileParams params = ReverbFileParams(argc, argv);
-        run_mode_reverb(params);
-      }*/
+        const char* infile_path = get_infile_path(argc, argv);
+        ReverbOptions options = ReverbOptions(argc, argv);
+        run_mode_effect<ReverbOptions>(infile_path, options);
+      }
       else
       {
-        std::cerr << mode << " is an invalid mode. See 'wav-edit.exe help'.";
+        std::cerr << "Error: " << mode << " is an invalid mode. See 'wav-edit[.exe] help'.";
       }
     }
     catch (const std::exception& e)
@@ -229,97 +325,58 @@ int main(const int argc, const char* argv[])
   return 0;
 }
 
-bool fileExists(const std::string& filename)
-{
-    struct stat buf;
-    if (stat(filename.c_str(), &buf) != -1)
-    {
-        return true;
-    }
-    return false;
-}
-
-/*
-./wav-edit.exe printhex [-c 200] file1
-./wav-edit.exe cut -s 100 [-e 200] file1 [file2]
-./wav-edit.exe levels -s 1000 -e 2152 file1 [file2]
-./wav-edit.exe reverb -dl 10 -dc 0.1 file1 [file2]
-*/
-
 void run_mode_help()
 {
   std::cout
     << "USAGE:\n"
-    << "simple-dsp.exe MODE PARAM1 PARAM2 ...\n\n"
+    << "wav-edit[.exe] MODE [FILEPATH] [OPTIONS]...\n\n"
 
     << "MODE = help\n"
     << "    Will print this help\n\n"
 
-    << "MODE = test\n"
-    << "    PARAM1 = path to a file\n"
-    << "        Will test if the file is exists\n\n"
+    << "MODE = info FILEPATH\n"
+    << "    Will print header information of WAVE file\n\n"
 
-    << "MODE = print_head\n"
-    << "    PARAM1 = path to a file\n"
-    << "        Print header of .WAV file\n\n"
+    << "MODE = hex FILEPATH\n"
+    << "    Will print first file bytes as hex numbers\n"
+    << "    OPTIONS:\n"
+    << "    -c = maximum number of bytes to print (256 by default)\n\n"
 
-    << "MODE = cut\n"
-    << "    PARAM1 = path to a file\n"
-    << "        Print header of .WAV file\n\n"
+    << "MODE = trim FILEPATH\n"
+    << "    Will trim WAVE data from start point to end point\n"
+    << "    OPTIONS:\n"
+    << "    -s = start point of the trimmed fragment in milliseconds (start of data by default)\n"
+    << "    -e = end point of the trimmed fragment in milliseconds (end of data by default)\n"
+    << "    -o = output file path (same file by default)\n\n"
 
-    << "MODE = levels\n"
-    << "    PARAM1 = path to a file\n"
-    << "        Print header of .WAV file\n\n"
+    << "MODE = fade FILEPATH\n"
+    << "    Will add a 'fade away' effect with volume decreasing from start point to end point\n"
+    << "    OPTIONS:\n"
+    << "    -s = start point of the effect in milliseconds (start of data by default)\n"
+    << "    -e = end point of the effect in milliseconds (end of data by default)\n"
+    << "    -l = volume level at end point from 0 to 1 (0 by default)\n"
+    << "    -o = output file path (same file by default)\n\n"
 
-    << "MODE = reverb\n"
-    << "    PARAM1 = path to a file\n"
-    << "        Print header of .WAV file\n\n"
-
-    << "MODE = printhex\n"
-    << "    PARAM1 = path to a file\n"
-    << "    PARAM2 = number of bytes\n"
-    << "       Print first PARAM2 bytes as hex numbers\n" << std::endl;
+    << "MODE = reverb FILEPATH\n"
+    << "    Will add a 'reverb' effect with selected delay and decay coefficient\n"
+    << "    OPTIONS:\n"
+    << "    -d = reverb delay in milliseconds (1000 by default)\n"
+    << "    -k = reverb decay coefficient from 0 to 1 (0.1 by default)\n"
+    << "    -o = output file path (same file by default)\n" << std::endl;
 }
 
-void run_mode_test(TestFileParams& params)
-{
-  std::ifstream file(params.filePath);
-
-  if (file.good())
-  {
-    std::cout << params.filePath << " exists.";
-  }
-  else
-  {
-    std::cout << params.filePath << " does not exist or is not a file.";
-  }
-}
-
-void run_mode_printhex(PrintHexFileParams& params)
+void run_mode_info(const char* file, InfoOptions& options)
 {
   try
   {
-    std::vector<uint8_t> bytes = readfile(params.filePath, params.maxPrintCount);
-    print_as_hex_columns(bytes, 16, params.maxPrintCount);
-  }
-  catch (std::exception& e)
-  {
-    std::cerr << e.what() << std::endl;
-  }
-}
-
-void run_mode_printhead(PrintHeadFileParams& params)
-{
-  try
-  {
-    WavHeader header = WavHeader(params.filePath);
+    WavHeader header = WavHeader(file);
     if (header.check_validity())
     {
       std::cout << header.to_string() << "\n";
     }
     else
     {
-      throw std::invalid_argument("This is not a correct WAV file.\n");
+      throw std::invalid_argument("Error: This is not a correct WAV file.\n");
     }
   }
   catch (std::exception& e)
@@ -328,19 +385,49 @@ void run_mode_printhead(PrintHeadFileParams& params)
   }
 }
 
-void run_mode_cut(CutFileParams& params)
+void run_mode_hex(const char* infile_path, HexOptions& options)
 {
   try
   {
-    std::vector<uint8_t> bytes = readfile(params.filePath);
+    std::vector<uint8_t> bytes = readfile(infile_path, options.max_print_count);
+    print_as_hex_columns(bytes, 16, options.max_print_count);
+  }
+  catch (std::exception& e)
+  {
+    std::cerr << e.what() << std::endl;
+  }
+}
 
-    if (params.end_flag)
+void effect(std::vector<uint8_t>& bytes, TrimOptions& options)
+{
+  effects::trim(bytes, options);
+}
+
+void effect(std::vector<uint8_t>& bytes, FadeOptions& options)
+{
+  effects::fade(bytes, options);
+}
+
+void effect(std::vector<uint8_t>& bytes, ReverbOptions& options)
+{
+  effects::reverb(bytes, options);
+}
+
+template <typename T>
+void run_mode_effect(const char* infile_path, T& options)
+{
+  try
+  {
+    const char* outfile_path = options.out_flag ? options.outfile_path : infile_path;
+    std::vector<uint8_t> bytes = readfile(infile_path);
+
+    // Different effects depending on the T type of the options
+    effect(bytes, options); 
+    
+    if (check_for_replace_dialogue(outfile_path))
     {
-      effects::cut(bytes, params.start_ms, params.end_ms);
-    }
-    else
-    {
-      effects::cut(bytes, params.start_ms);
+      writefile(bytes, outfile_path);
+      std::cout << "WAVE file succesfully edited and written to " << outfile_path << std::endl;
     }
   }
   catch (std::exception& e)
@@ -348,44 +435,3 @@ void run_mode_cut(CutFileParams& params)
     std::cerr << e.what() << std::endl;
   }
 };
-/*
-void run_mode_levels(LevelsFileParams& params)
-{
-  try
-  {
-    WavHeader header = WavHeader(params.filePath);
-    if (header.check_validity())
-    {
-      std::cout << header.to_string() << "\n";
-    }
-    else
-    {
-      throw std::invalid_argument("This is not a correct WAV file.\n");
-    }
-  }
-  catch (std::exception& e)
-  {
-    std::cerr << e.what() << std::endl;
-  }
-};
-
-void run_mode_reverb(ReverbFileParams& params)
-{
-  try
-  {
-    WavHeader header = WavHeader(params.filePath);
-    if (header.check_validity())
-    {
-      std::cout << header.to_string() << "\n";
-    }
-    else
-    {
-      throw std::invalid_argument("This is not a correct WAV file.\n");
-    }
-  }
-  catch (std::exception& e)
-  {
-    std::cerr << e.what() << std::endl;
-  }
-};
-*/
