@@ -29,7 +29,7 @@ struct ReverbOptions
   bool out_flag = false;
   ReverbOptions(const int argc, const char* argv[]);
 };
-
+//add commentaries about errors
 namespace effects
 {
   void trim(std::vector<uint8_t>& bytes, TrimOptions& options);
