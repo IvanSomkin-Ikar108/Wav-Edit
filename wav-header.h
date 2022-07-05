@@ -5,6 +5,13 @@
 #include <cstdint>
 #include <vector>
 
+namespace format
+{
+  const uint16_t WAVE_FORMAT_PCM        = 0x0001;
+  const uint16_t WAVE_FORMAT_IEEE_FLOAT = 0x0003;
+  const uint16_t WAVE_FORMAT_EXTENSIBLE = 0xFFFE;
+}
+
 // Can work incorrectly with GSM 6.10 or other such compressed formats
 // If format doesn't use bits_per_sample, can't calculate bit depth
 class WavHeader
@@ -33,7 +40,7 @@ private:
   
 public:
   WavHeader(const std::vector<uint8_t> &byte_file);
-  WavHeader(const std::string &filepath);
+  WavHeader(const char* filepath);
   bool check_validity();
   uint16_t get_audio_format();
   uint16_t get_num_of_channels();

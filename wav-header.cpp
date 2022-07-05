@@ -13,13 +13,6 @@ namespace id
   const uint32_t fact = 0x66616374;
 }
 
-namespace format
-{
-  const uint16_t WAVE_FORMAT_PCM        = 0x0001;
-  const uint16_t WAVE_FORMAT_IEEE_FLOAT = 0x0003;
-  const uint16_t WAVE_FORMAT_EXTENSIBLE = 0xFFFE;
-}
-
 namespace type
 {
   const std::string UINT8_T   = "uint8_t";
@@ -98,7 +91,7 @@ WavHeader::WavHeader(const std::vector<uint8_t> &byte_file)
   }
 }
 
-WavHeader::WavHeader(const string& filepath) : WavHeader(readfile(filepath.c_str())) {}
+WavHeader::WavHeader(const char* file_path) : WavHeader(readfile(file_path)) {}
 
 bool WavHeader::check_validity()
 {
@@ -216,6 +209,6 @@ std::string WavHeader::to_string()
                                         << extension_size  << "\n" 
       << "Audio subformat of extensible format: "
                                         << subformat       << "\n"
-      << "Sampled data length: "        << subchunk2_size  << "\n";
+      << "Sampled data length: "        << subchunk2_size;
   return str.str(); 
 }
