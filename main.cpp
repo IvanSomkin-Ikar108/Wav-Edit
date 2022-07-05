@@ -60,7 +60,6 @@ bool check_for_replace_dialogue(const char* file_path)
   return true;
 }
 
-
 const char* get_infile_path(const int argc, const char* argv[])
 {
   if (argc < 3)
