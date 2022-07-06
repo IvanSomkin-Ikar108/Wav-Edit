@@ -3,36 +3,43 @@
 
 #include <cstdint>
 
-struct InfoOptions{
-  const char* file_path;
+// TODO: Add comments about possible exceptions
+
+struct BaseOptions
+{
+  const char* infile_path;
+  BaseOptions(const int argc, const char* argv[]);
+};
+
+struct InfoOptions : BaseOptions
+{
   InfoOptions(const int argc, const char* argv[]);
 };
 
-struct HexOptions
+struct HexOptions : BaseOptions
 {
-  const char* file_path;
   size_t max_print_count;
   HexOptions(const int argc, const char* argv[]);
 };
 
-struct TrimOptions
+struct TrimOptions : BaseOptions
 {
-  uint32_t start_ms, end_ms;
+  uint32_t start_ms = 0, end_ms;
   const char* outfile_path;
   bool end_flag = false, out_flag = false;
   TrimOptions(const int argc, const char* argv[]);
 };
 
-struct FadeOptions
+struct FadeOptions : BaseOptions
 {
-  uint32_t start_ms, end_ms;
+  uint32_t start_ms = 0, end_ms;
   double end_lvl_01 = 0.;
   const char* outfile_path;
   bool end_flag = false, out_flag = false;
   FadeOptions(const int argc, const char* argv[]);
 };
 
-struct ReverbOptions
+struct ReverbOptions : BaseOptions
 {
   uint32_t delay_ms = 1000;
   double decay_01 = 0.1;

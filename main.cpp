@@ -10,7 +10,6 @@
 #include <vector>
 #include <sstream>
 #include <cstdint>
-#include <sys/stat.h>
 
 namespace modes
 {
@@ -25,13 +24,9 @@ namespace modes
 /* Support functions */
 
 // If file already exists, ask user if they want to rewrite it.
-// Returns true, if file path is empty or if user confirms rewriting.
-// Returns false, if user denies rewriting.
+// Returns true if file path is empty, or if user confirms rewriting.
+// Returns false if user denies rewriting.
 bool check_for_replace_dialogue(const char* file_path);
-
-const char* get_infile_path(const int argc, const char* argv[]);
-
-bool file_exists(const char* file_path);
 
 
 /* Mode functions */
@@ -40,15 +35,21 @@ bool file_exists(const char* file_path);
 void run_mode_help();
 
 // Show WAV header information.
-void run_mode_info(const char* infile_path, InfoOptions& options);
+// 
+// Throws std::invalid_argument exception if filePath does not exist
+// Throws std::runtime_error if error while reading file
+void run_mode_info(InfoOptions& options);
 
 // Show first bytes of file as hex.
-void run_mode_hex(const char* infile_path, HexOptions& options);
+// 
+// Throws std::invalid_argument exception if filePath does not exist
+// Throws std::runtime_error if error while reading file
+void run_mode_hex(HexOptions& options);
 
 // Apply sound effect to file.
 // The effect is chosen based on the O type of the options.
 template <typename O>
-void run_mode_effect(const char* infile_path, O& options);
+void run_mode_effect(O& options);
 
 
 int main(const int argc, const char* argv[])
@@ -64,33 +65,28 @@ int main(const int argc, const char* argv[])
       }
       else if (mode == modes::info)
       {
-        const char* infile_path = get_infile_path(argc, argv);
         InfoOptions options = InfoOptions(argc, argv);
-        run_mode_info(infile_path, options);
+        run_mode_info(options);
       }
       else if (mode == modes::hex)
       {
-        const char* infile_path = get_infile_path(argc, argv);
         HexOptions options = HexOptions(argc, argv);
-        run_mode_hex(infile_path, options);
+        run_mode_hex(options);
       }
       else if (mode == modes::trim)
       {
-        const char* infile_path = get_infile_path(argc, argv);
         TrimOptions options = TrimOptions(argc, argv);
-        run_mode_effect<TrimOptions>(infile_path, options);
+        run_mode_effect<TrimOptions>(options);
       }
       else if (mode == modes::fade)
       {
-        const char* infile_path = get_infile_path(argc, argv);
         FadeOptions options = FadeOptions(argc, argv);
-        run_mode_effect<FadeOptions>(infile_path, options);
+        run_mode_effect<FadeOptions>(options);
       }
       else if (mode == modes::reverb)
       {
-        const char* infile_path = get_infile_path(argc, argv);
         ReverbOptions options = ReverbOptions(argc, argv);
-        run_mode_effect<ReverbOptions>(infile_path, options);
+        run_mode_effect<ReverbOptions>(options);
       }
       else
       {
@@ -152,37 +148,23 @@ void run_mode_help()
     << "    -o = output file path (same file by default)\n" << std::endl;
 }
 
-void run_mode_info(const char* infile_path, InfoOptions& options)
+void run_mode_info(InfoOptions& options)
 {
-  try
+  WavHeader header = WavHeader(options.infile_path);
+  if (header.check_validity())
   {
-    WavHeader header = WavHeader(infile_path);
-    if (header.check_validity())
-    {
-      std::cout << header.to_string() << "\n";
-    }
-    else
-    {
-      throw std::invalid_argument("Error: This is not a correct WAV file.\n");
-    }
+    std::cout << header.to_string() << "\n";
   }
-  catch (std::exception& e)
+  else
   {
-    std::cerr << e.what() << std::endl;
+    throw std::invalid_argument("Error: This is not a correct WAV file.\n");
   }
 }
 
-void run_mode_hex(const char* infile_path, HexOptions& options)
+void run_mode_hex(HexOptions& options)
 {
-  try
-  {
-    std::vector<uint8_t> bytes = readfile(infile_path, options.max_print_count);
-    print_as_hex_columns(bytes, 16, options.max_print_count);
-  }
-  catch (std::exception& e)
-  {
-    std::cerr << e.what() << std::endl;
-  }
+  std::vector<uint8_t> bytes = readfile(options.infile_path, options.max_print_count);
+  print_as_hex_columns(bytes, 16, options.max_print_count);
 }
 
 // Trim effect.
@@ -204,25 +186,18 @@ void effect(std::vector<uint8_t>& bytes, ReverbOptions& options)
 }
 
 template <typename O>
-void run_mode_effect(const char* infile_path, O& options)
+void run_mode_effect(O& options)
 {
-  try
-  {
-    const char* outfile_path = options.out_flag ? options.outfile_path : infile_path;
-    std::vector<uint8_t> bytes = readfile(infile_path);
+  const char* outfile_path = options.out_flag ? options.outfile_path : options.infile_path;
+  std::vector<uint8_t> bytes = readfile(options.infile_path);
 
-    // Effect function is selected based on options type
-    effect(bytes, options); 
-    
-    if (check_for_replace_dialogue(outfile_path))
-    {
-      writefile(bytes, outfile_path);
-      std::cout << "WAVE file succesfully edited and written to " << outfile_path << std::endl;
-    }
-  }
-  catch (std::exception& e)
+  // Effect function is selected based on options type
+  effect(bytes, options);
+
+  if (check_for_replace_dialogue(outfile_path))
   {
-    std::cerr << e.what() << std::endl;
+    writefile(bytes, outfile_path);
+    std::cout << "WAVE file succesfully edited and written to " << outfile_path << std::endl;
   }
 };
 
@@ -241,31 +216,4 @@ bool check_for_replace_dialogue(const char* file_path)
     }
   }
   return true;
-}
-
-const char* get_infile_path(const int argc, const char* argv[])
-{
-  if (argc < 3)
-  {
-    throw std::invalid_argument("Error: No input file passed.");
-  }
-  
-  const char* infile_path = argv[2];
-
-  if (!file_exists(infile_path))
-  {
-    throw std::invalid_argument("Error: Input file '" + std::string(infile_path) + "' does not exist.");
-  }
-
-  return infile_path;
-}
-
-bool file_exists(const char* file_path)
-{
-    struct stat buf;
-    if (stat(file_path, &buf) != -1)
-    {
-        return true;
-    }
-    return false;
 }

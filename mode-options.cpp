@@ -1,8 +1,9 @@
 #include "mode-options.h"
+#include "readfile.h"
 
 #include <stdexcept>
 #include <sstream>
-
+#include <sys/stat.h>
 
 /* Support functions */
 
@@ -10,29 +11,37 @@ int32_t cstr_to_int(const char* cstr);
 
 double cstr_to_double(const char* cstr);
 
-
 /* Option parsing implementation */
 
-InfoOptions::InfoOptions(const int argc, const char* argv[])
-{
-  if (argc > 2)
-  {
-    file_path = argv[2];
-  }
-  else
-  {
-    throw std::invalid_argument("Error: No input file passed.");
-  }
-}
-
-HexOptions::HexOptions(const int argc, const char* argv[])
+BaseOptions::BaseOptions(const int argc, const char* argv[])
 {
   if (argc < 3)
   {
     throw std::invalid_argument("Error: No input file passed.");
   }
 
-  file_path = argv[2];
+  infile_path = argv[2];
+
+  if (!file_exists(infile_path))
+  {
+    throw std::invalid_argument("Error: Input file '" + std::string(infile_path) + "' does not exist.");
+  }
+}
+
+InfoOptions::InfoOptions(const int argc, const char* argv[])
+  : BaseOptions(argc, argv)
+{
+  if (argc < 3)
+  {
+    throw std::invalid_argument("Error: No input file passed.");
+  }
+
+  infile_path = argv[2];
+}
+
+HexOptions::HexOptions(const int argc, const char* argv[])
+  : BaseOptions(argc, argv)
+{
   max_print_count = 256;
 
   if (argc > 4 && std::string(argv[3]) == std::string("-c"))
@@ -50,8 +59,9 @@ HexOptions::HexOptions(const int argc, const char* argv[])
 }
 
 TrimOptions::TrimOptions(const int argc, const char* argv[])
-{    
-  int32_t start_arg = 0, end_arg, idx = 3;
+  : BaseOptions(argc, argv)
+{ 
+  int32_t start_arg, end_arg, idx = 3;
   while (idx < argc && argv[idx][0] == '-')
   {
     switch (argv[idx][1])
@@ -96,8 +106,9 @@ TrimOptions::TrimOptions(const int argc, const char* argv[])
 }
 
 FadeOptions::FadeOptions(const int argc, const char* argv[])
+  : BaseOptions(argc, argv)
 {
-  int32_t start_arg = 0, end_arg, idx = 3;
+  int32_t start_arg, end_arg, idx = 3;
   while (idx < argc && argv[idx][0] == '-')
   {
     switch (argv[idx][1])
@@ -143,11 +154,19 @@ FadeOptions::FadeOptions(const int argc, const char* argv[])
   if (idx != argc)
   {
     throw std::invalid_argument("Error: Invalid options format.");
-  }    
+  }
 }
 
 ReverbOptions::ReverbOptions(const int argc, const char* argv[])
+  : BaseOptions(argc, argv)
 {
+  infile_path = argv[2];
+
+  if (!file_exists(infile_path))
+  {
+    throw std::invalid_argument("Error: Input file '" + std::string(infile_path) + "' does not exist.");
+  }
+
   int32_t delay_arg, idx = 3;
   while (idx < argc && argv[idx][0] == '-')
   {
