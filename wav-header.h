@@ -5,6 +5,8 @@
 #include <cstdint>
 #include <vector>
 
+// TODO: Add comments about possible exceptions
+
 namespace format
 {
   const uint16_t WAVE_FORMAT_PCM        = 0x0001;

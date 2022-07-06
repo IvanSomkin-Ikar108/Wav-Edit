@@ -288,7 +288,7 @@ uint32_t ms_to_byte_count(WavHeader& header, uint32_t time_ms)
   uint32_t bytes_count = samples_count * header.get_block_align();
   if (bytes_count > header.get_data_size())
   {
-    throw std::invalid_argument("Error: Time point is not in data range!");
+    throw std::invalid_argument("Error: Time point " + std::to_string(time_ms) + " is not in data range!");
   }
   return bytes_count;
 }
