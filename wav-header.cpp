@@ -1,8 +1,9 @@
+#include "wav-header.h"
+#include "readfile.h"
+
 #include <iostream>
 #include <sstream>
 #include <stdexcept>
-#include "wav-header.h"
-#include "readfile.h"
 
 namespace id
 {
