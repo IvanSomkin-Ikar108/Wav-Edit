@@ -88,7 +88,7 @@ WavHeader::WavHeader(const std::vector<uint8_t> &byte_file)
 
   if (!check_validity())
   {
-    throw std::invalid_argument("Error: Can't read invalid header!");
+    throw std::invalid_argument("Error: Can't read valid header!");
   }
 }
 

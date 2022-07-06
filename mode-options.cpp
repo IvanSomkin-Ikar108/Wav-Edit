@@ -31,12 +31,6 @@ BaseOptions::BaseOptions(const int argc, const char* argv[])
 InfoOptions::InfoOptions(const int argc, const char* argv[])
   : BaseOptions(argc, argv)
 {
-  if (argc < 3)
-  {
-    throw std::invalid_argument("Error: No input file passed.");
-  }
-
-  infile_path = argv[2];
 }
 
 HexOptions::HexOptions(const int argc, const char* argv[])
@@ -49,7 +43,7 @@ HexOptions::HexOptions(const int argc, const char* argv[])
     int32_t max_print_arg = cstr_to_int(argv[4]);
     if (max_print_arg < 1)
     {
-      throw std::invalid_argument("Error: Parameter max_print_count should be more than 0.");
+      throw std::invalid_argument("Error: Parameter max_print_count (-с) should be more than 0.");
     }
     else
     {
@@ -136,7 +130,7 @@ FadeOptions::FadeOptions(const int argc, const char* argv[])
         end_lvl_01 = cstr_to_double(argv[idx + 1]);
         if (end_lvl_01 < 0 || end_lvl_01 > 1)
         {
-          throw std::invalid_argument("Error: End volume level (-e) should be a float from 0 to 1.");
+          throw std::invalid_argument("Error: End volume level (-l) should be a float from 0 to 1.");
         }
         end_ms = (uint32_t)end_arg;
         break;
@@ -160,13 +154,6 @@ FadeOptions::FadeOptions(const int argc, const char* argv[])
 ReverbOptions::ReverbOptions(const int argc, const char* argv[])
   : BaseOptions(argc, argv)
 {
-  infile_path = argv[2];
-
-  if (!file_exists(infile_path))
-  {
-    throw std::invalid_argument("Error: Input file '" + std::string(infile_path) + "' does not exist.");
-  }
-
   int32_t delay_arg, idx = 3;
   while (idx < argc && argv[idx][0] == '-')
   {
@@ -176,7 +163,7 @@ ReverbOptions::ReverbOptions(const int argc, const char* argv[])
         delay_arg = cstr_to_int(argv[idx + 1]);
         if (delay_arg < 0)
         {
-          throw std::invalid_argument("Error: Delay time (-s) should be positive or zero.");
+          throw std::invalid_argument("Error: Delay time (-d) should be positive or zero.");
         }
         delay_ms = delay_arg;
         break;
@@ -185,7 +172,7 @@ ReverbOptions::ReverbOptions(const int argc, const char* argv[])
         decay_01 = cstr_to_double(argv[idx + 1]);
         if (decay_01 < 0 || decay_01 > 1)
         {
-          throw std::invalid_argument("Error: Decay coefficient (-e) should be a float from 0 to 1.");
+          throw std::invalid_argument("Error: Decay coefficient (-k) should be a float from 0 to 1.");
         }
         break;
 
@@ -231,7 +218,7 @@ double cstr_to_double(const char* cstr)
 
   if (conversion.fail())
   {
-    throw std::invalid_argument("Could not convert " + std::string(cstr) + " to int.");
+    throw std::invalid_argument("Could not convert " + std::string(cstr) + " to float.");
   }
 
   return cstr_double;
