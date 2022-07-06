@@ -5,8 +5,6 @@
 #include <cstdint>
 #include <vector>
 
-// TODO: Add comments about possible exceptions
-
 namespace format
 {
   const uint16_t WAVE_FORMAT_PCM        = 0x0001;
@@ -16,6 +14,13 @@ namespace format
 
 // Can work incorrectly with GSM 6.10 or other such compressed formats
 // If format doesn't use bits_per_sample, can't calculate bit depth
+//
+// Throws std::invalid_argument exception if file is too small to contain WAVE header 
+// Throws std::invalid_argument exception if file contains invalid WAVE header 
+//
+// The file_path constructor:
+// Throws std::invalid_argument exception if file_path does not exist
+// Throws std::runtime_error if error while reading file
 class WavHeader
 {
 private:
@@ -40,7 +45,7 @@ private:
   
 public:
   WavHeader(const std::vector<uint8_t> &byte_file);
-  WavHeader(const char* filepath);
+  WavHeader(const char* file_path);
   bool check_validity();
   uint16_t get_audio_format();
   uint16_t get_num_of_channels();
