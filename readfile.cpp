@@ -1,12 +1,15 @@
 #include "readfile.h"
+
 #include <fstream>
 #include <stdexcept>
 #include <sys/stat.h>
-    
-size_t get_file_size(const char* filePath)
+
+/* Support functions */
+
+size_t get_file_size(const char* file_path)
 {
   struct stat results;
-  if (stat(filePath, &results) == 0)
+  if (stat(file_path, &results) == 0)
   {
     return results.st_size;
   }
@@ -16,40 +19,52 @@ size_t get_file_size(const char* filePath)
   }
 }
 
-std::vector<uint8_t> readfile_count(const char* filePath, size_t readByteCount)
+/* Header functions */
+
+bool file_exists(const char* file_path)
 {
-  std::ifstream infile(filePath, std::ios_base::in | std::ios_base::binary);
+  struct stat results;
+  if (stat(file_path, &results) != -1)
+  {
+    return true;
+  }
+  return false;
+}
+
+std::vector<uint8_t> readfile_count(const char* file_path, size_t read_byte_count)
+{
+  std::ifstream infile(file_path, std::ios_base::in | std::ios_base::binary);
   if (!infile.is_open())
   {
-    throw std::invalid_argument("Error: File path (" + std::string(filePath) + ") could not be opened.");
+    throw std::invalid_argument("Error: File path '" + std::string(file_path) + "' could not be opened.");
   }
 
   std::vector<uint8_t> bytes;
 
-  bytes.resize(readByteCount);
-  infile.read((char*)&bytes[0], readByteCount);
+  bytes.resize(read_byte_count);
+  infile.read((char*)&bytes[0], read_byte_count);
+
   if (infile.fail())
   {
-    throw std::runtime_error("Error: Failed to read (" + std::to_string(readByteCount) + ") bytes from (" + filePath + ").");
+    throw std::runtime_error("Error: Failed to read '" + std::to_string(read_byte_count) + "' bytes from '" + file_path + "'.");
   }
 
   infile.close();
-
   return bytes;
 }
 
-std::vector<uint8_t> readfile(const char* filePath, size_t maxByteRead)
+std::vector<uint8_t> readfile(const char* file_path, size_t max_byte_read)
 {
-  size_t fileByteCount = get_file_size(filePath);
-  std::streamsize readByteCount = (std::streamsize)fileByteCount;
-  if (maxByteRead < fileByteCount)
+  size_t file_byte_count = get_file_size(file_path);
+  std::streamsize read_byte_count = (std::streamsize)file_byte_count;
+  if (max_byte_read < file_byte_count)
   {
-    readByteCount = (std::streamsize)maxByteRead;
+    read_byte_count = (std::streamsize)max_byte_read;
   }
-  return readfile_count(filePath, readByteCount);
+  return readfile_count(file_path, read_byte_count);
 }
 
-std::vector<uint8_t> readfile(const char* filePath)
+std::vector<uint8_t> readfile(const char* file_path)
 {
-  return readfile_count(filePath, get_file_size(filePath));
+  return readfile_count(file_path, get_file_size(file_path));
 }
