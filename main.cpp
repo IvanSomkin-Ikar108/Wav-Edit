@@ -1,14 +1,16 @@
+#include "readfile.h"
+#include "writefile.h"
+#include "printhex.h"
+#include "mode-options.h"
+#include "wav-header.h"
+#include "sound-effects.h"
+
 #include <iostream>
 #include <string>
 #include <vector>
 #include <sstream>
 #include <cstdint>
 #include <sys/stat.h>
-#include "readfile.h"
-#include "writefile.h"
-#include "printhex.h"
-#include "wav-header.h"
-#include "sound-effects.h"
 
 namespace modes
 {
@@ -20,251 +22,34 @@ namespace modes
   const std::string reverb = "reverb";
 }
 
-int32_t cstr_to_int(const char* cstr)
-{
-  int32_t cstr_int;
-  std::stringstream conversion;
-  conversion << cstr;
-  conversion >> cstr_int;
+/* Support functions */
 
-  if (conversion.fail())
-  {
-    throw std::invalid_argument("Could not convert " + std::string(cstr) + " to int.");
-  }
+// If file already exists, ask user if they want to rewrite it.
+// Returns true, if file path is empty or if user confirms rewriting.
+// Returns false, if user denies rewriting.
+bool check_for_replace_dialogue(const char* file_path);
 
-  return cstr_int;
-}
+const char* get_infile_path(const int argc, const char* argv[]);
 
-bool file_exists(const char* file_path)
-{
-    struct stat buf;
-    if (stat(file_path, &buf) != -1)
-    {
-        return true;
-    }
-    return false;
-}
+bool file_exists(const char* file_path);
 
-bool check_for_replace_dialogue(const char* file_path)
-{
-  if (file_exists(file_path))
-  {
-    std::string answer;
-    std::cout << "File " << file_path << " already exists. Would you like to replace it (y/n)?: ";
-    std::getline(std::cin, answer);
-    if (answer == std::string("n") || answer == std::string("N"))
-    {
-      return false;
-    }
-  }
-  return true;
-}
 
-const char* get_infile_path(const int argc, const char* argv[])
-{
-  if (argc < 3)
-  {
-    throw std::invalid_argument("Error: No input file passed.");
-  }
-  
-  const char* infile_path = argv[2];
+/* Mode functions */
 
-  if (!file_exists(infile_path))
-  {
-    throw std::invalid_argument("Error: Input file does not exist.");
-  }
-
-  return infile_path;
-}
-
-struct InfoOptions{
-  const char* file_path;
-  InfoOptions(const int argc, const char* argv[])
-  {
-    if (argc > 2)
-    {
-      file_path = argv[2];
-    }
-    else
-    {
-      throw std::invalid_argument("Error: No input file passed.");
-    }
-  }
-};
-
-struct HexOptions
-{
-  const char* file_path;
-  size_t max_print_count;
-  HexOptions(const int argc, const char* argv[])
-  {
-    if (argc < 3)
-    {
-      throw std::invalid_argument("Error: No input file passed.");
-    }
-
-    file_path = argv[2];
-    max_print_count = 256;
-
-    if (argc > 4 && std::string(argv[3]) == std::string("-c"))
-    {
-      int32_t max_print_arg = cstr_to_int(argv[4]);
-      if (max_print_arg < 1)
-      {
-        throw std::invalid_argument("Error: Parameter max_print_count should be more than 0.");
-      }
-      else
-      {
-        max_print_count = (size_t)max_print_arg;
-      }
-    }
-  }
-};
-
-TrimOptions::TrimOptions(const int argc, const char* argv[])
-{    
-  int32_t start_arg = 0, end_arg, idx = 3;
-  while (idx < argc && argv[idx][0] == '-')
-  {
-    switch (argv[idx][1])
-    {
-      case 's':
-        start_arg = cstr_to_int(argv[idx + 1]);
-        if (start_arg < 0)
-        {
-          throw std::invalid_argument("Error: Start point (-s) should be positive or zero.");
-        }
-        start_ms = (uint32_t)start_arg;
-        break;
-
-      case 'e':
-        end_flag = true;
-        end_arg = cstr_to_int(argv[idx + 1]);
-        if (end_arg < 0)
-        {
-          throw std::invalid_argument("Error: End point (-e) should be positive or zero.");
-        }
-        end_ms = (uint32_t)end_arg;
-        break;
-
-      case 'o':
-        out_flag = true;
-        outfile_path = argv[idx + 1];
-        break;
-
-      default:
-        throw std::invalid_argument("Error: Invalid option -" + std::to_string(argv[idx][1]) + " for 'trim' mode.");
-    }
-    idx += 2;
-  }
-  if (idx != argc)
-  {
-    throw std::invalid_argument("Error: Invalid options format.");
-  }
-  if (end_flag && start_arg > end_arg)
-  {
-    throw std::invalid_argument("Error: Start point (-s) must be lesser than or equal to end point (-e).");
-  }
-}
-
-FadeOptions::FadeOptions(const int argc, const char* argv[])
-{
-  int32_t start_arg = 0, end_arg = 0, idx = 3;
-  while (idx < argc && argv[idx][0] == '-')
-  {
-    switch (argv[idx][1])
-    {
-      case 's':
-        start_arg = cstr_to_int(argv[idx + 1]);
-        if (start_arg < 0)
-        {
-          throw std::invalid_argument("Error: Start point (-s) should be positive or zero.");
-        }
-        start_ms = (uint32_t)start_arg;
-        break;
-
-      case 'e':
-        end_flag = true;
-        end_arg = cstr_to_int(argv[idx + 1]);
-        if (end_arg < 0)
-        {
-          throw std::invalid_argument("Error: End point (-e) should be positive or zero.");
-        }
-        break;
-
-      case 'l':
-        end_lvl_01 = cstr_to_int(argv[idx + 1]);
-        if (end_lvl_01 < 0 || end_lvl_01 > 1)
-        {
-          throw std::invalid_argument("Error: End volume level (-e) should be a float from 0 to 1.");
-        }
-        end_ms = (uint32_t)end_arg;
-        break;
-
-      case 'o':
-        out_flag = true;
-        outfile_path = argv[idx + 1];
-        break;
-
-      default:
-        throw std::invalid_argument("Error: Invalid option -" + std::to_string(argv[idx][1]) + " for 'cut' mode.");
-    }
-    idx += 2;
-  }
-  if (idx != argc)
-  {
-    throw std::invalid_argument("Error: Invalid options format.");
-  }    
-}
-
-ReverbOptions::ReverbOptions(const int argc, const char* argv[])
-{
-  int32_t delay_arg, idx = 3;
-  while (idx < argc && argv[idx][0] == '-')
-  {
-    switch (argv[idx][1])
-    {
-      case 'd':
-        delay_arg = cstr_to_int(argv[idx + 1]);
-        if (delay_arg < 0)
-        {
-          throw std::invalid_argument("Error: Delay time (-s) should be positive or zero.");
-        }
-        break;
-
-      case 'k':
-        decay_01 = cstr_to_int(argv[idx + 1]);
-        if (decay_01 < 0 || decay_01 > 1)
-        {
-          throw std::invalid_argument("Error: Decay coefficient (-e) should be a float from 0 to 1.");
-        }
-        delay_ms = (uint32_t)delay_arg;
-        break;
-
-      case 'o':
-        out_flag = true;
-        outfile_path = argv[idx + 1];
-        break;
-
-      default:
-        throw std::invalid_argument("Error: Invalid option -" + std::to_string(argv[idx][1]) + " for 'cut' mode.");
-    }
-    idx += 2;
-  }
-  if (idx != argc)
-  {
-    throw std::invalid_argument("Error: Invalid options format.");
-  } 
-}
-
+// Show usage guide.
 void run_mode_help();
 
+// Show WAV header information.
 void run_mode_info(const char* infile_path, InfoOptions& options);
 
+// Show first bytes of file as hex.
 void run_mode_hex(const char* infile_path, HexOptions& options);
 
-template <typename T>
-void run_mode_effect(const char* infile_path, T& options);
+// Apply sound effect to file.
+// The effect is chosen based on the O type of the options.
+template <typename O>
+void run_mode_effect(const char* infile_path, O& options);
+
 
 int main(const int argc, const char* argv[])
 {
@@ -324,6 +109,9 @@ int main(const int argc, const char* argv[])
   return 0;
 }
 
+
+/* Mode functions implementation */
+
 void run_mode_help()
 {
   std::cout
@@ -364,11 +152,11 @@ void run_mode_help()
     << "    -o = output file path (same file by default)\n" << std::endl;
 }
 
-void run_mode_info(const char* file, InfoOptions& options)
+void run_mode_info(const char* infile_path, InfoOptions& options)
 {
   try
   {
-    WavHeader header = WavHeader(file);
+    WavHeader header = WavHeader(infile_path);
     if (header.check_validity())
     {
       std::cout << header.to_string() << "\n";
@@ -397,30 +185,33 @@ void run_mode_hex(const char* infile_path, HexOptions& options)
   }
 }
 
+// Trim effect.
 void effect(std::vector<uint8_t>& bytes, TrimOptions& options)
 {
   effects::trim(bytes, options);
 }
 
+// Fade effect.
 void effect(std::vector<uint8_t>& bytes, FadeOptions& options)
 {
   effects::fade(bytes, options);
 }
 
+// Reverb effect.
 void effect(std::vector<uint8_t>& bytes, ReverbOptions& options)
 {
   effects::reverb(bytes, options);
 }
 
-template <typename T>
-void run_mode_effect(const char* infile_path, T& options)
+template <typename O>
+void run_mode_effect(const char* infile_path, O& options)
 {
   try
   {
     const char* outfile_path = options.out_flag ? options.outfile_path : infile_path;
     std::vector<uint8_t> bytes = readfile(infile_path);
 
-    // Different effects depending on the T type of the options
+    // Effect function is selected based on options type
     effect(bytes, options); 
     
     if (check_for_replace_dialogue(outfile_path))
@@ -434,3 +225,47 @@ void run_mode_effect(const char* infile_path, T& options)
     std::cerr << e.what() << std::endl;
   }
 };
+
+/* Support functions implementation */
+
+bool check_for_replace_dialogue(const char* file_path)
+{
+  if (file_exists(file_path))
+  {
+    std::string answer;
+    std::cout << "File " << file_path << " already exists. Would you like to replace it (y/n)?: ";
+    std::getline(std::cin, answer);
+    if (answer == std::string("n") || answer == std::string("N"))
+    {
+      return false;
+    }
+  }
+  return true;
+}
+
+const char* get_infile_path(const int argc, const char* argv[])
+{
+  if (argc < 3)
+  {
+    throw std::invalid_argument("Error: No input file passed.");
+  }
+  
+  const char* infile_path = argv[2];
+
+  if (!file_exists(infile_path))
+  {
+    throw std::invalid_argument("Error: Input file '" + std::string(infile_path) + "' does not exist.");
+  }
+
+  return infile_path;
+}
+
+bool file_exists(const char* file_path)
+{
+    struct stat buf;
+    if (stat(file_path, &buf) != -1)
+    {
+        return true;
+    }
+    return false;
+}

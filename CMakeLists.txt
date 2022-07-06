@@ -9,6 +9,7 @@ add_executable(wav-edit
     readfile.cpp readfile.h
     writefile.cpp writefile.h
     printhex.cpp printhex.h
+    mode-options.cpp mode-options.h
     wav-header.cpp wav-header.h
     sound-effects.cpp sound-effects.h
     )

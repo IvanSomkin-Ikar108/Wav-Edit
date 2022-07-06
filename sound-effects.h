@@ -1,41 +1,26 @@
 #ifndef SOUNDEFFECTS_H
 #define SOUNDEFFECTS_H
 
+#include "mode-options.h"
+
 #include <vector>
 #include <cstdint>
 
-struct TrimOptions
-{
-  uint32_t start_ms, end_ms;
-  const char* outfile_path;
-  bool end_flag = false, out_flag = false;
-  TrimOptions(const int argc, const char* argv[]);
-};
+// TODO: Add comments about possible exceptions
 
-struct FadeOptions
-{
-  uint32_t start_ms, end_ms;
-  double end_lvl_01 = 0.;
-  const char* outfile_path;
-  bool end_flag = false, out_flag = false;
-  FadeOptions(const int argc, const char* argv[]);
-};
-
-struct ReverbOptions
-{
-  uint32_t delay_ms = 1000;
-  double decay_01 = 0.1;
-  const char* outfile_path;
-  bool out_flag = false;
-  ReverbOptions(const int argc, const char* argv[]);
-};
-//add commentaries about errors
 namespace effects
 {
+  // Trim effect.
+  // Removes WAV data to the left and to the right of selected fragment.
   void trim(std::vector<uint8_t>& bytes, TrimOptions& options);
 
+  // Fade effect.
+  // Gradually reduces volume of WAV data from start point to end point.
+  // The volume at start point is 100%. The volume at end point can be selected (0% by default).
   void fade(std::vector<uint8_t>& bytes, FadeOptions& options);
 
+  // Reverb effect.
+  // Adds reverberation to WAV data with selected delay and decay coefficient.
   void reverb(std::vector<uint8_t>& bytes, ReverbOptions& options);
 }
 
