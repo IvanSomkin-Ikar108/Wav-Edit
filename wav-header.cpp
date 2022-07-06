@@ -1,7 +1,9 @@
-#include <iostream>
-#include <sstream>
 #include "wav-header.h"
 #include "readfile.h"
+
+#include <iostream>
+#include <sstream>
+#include <stdexcept>
 
 namespace id
 {
@@ -10,13 +12,6 @@ namespace id
   const uint32_t fmt  = 0x666D7420;
   const uint32_t data = 0x64617461;
   const uint32_t fact = 0x66616374;
-}
-
-namespace format
-{
-  const uint16_t WAVE_FORMAT_PCM        = 0x0001;
-  const uint16_t WAVE_FORMAT_IEEE_FLOAT = 0x0003;
-  const uint16_t WAVE_FORMAT_EXTENSIBLE = 0xFFFE;
 }
 
 namespace type
@@ -82,14 +77,22 @@ WavHeader::WavHeader(const std::vector<uint8_t> &byte_file)
   {
     next_subchunk_ID = _4x8_to_32_be(byte_file, offset);
     next_subchunk_size = _4x8_to_32_le(byte_file, offset + 4);
-    offset += next_subchunk_size + next_subchunk_size % 2 + 8;
+    
+    offset += 8;
+    data_offset = offset;
+    offset += next_subchunk_size + next_subchunk_size % 2;
   }
-  
+   
   subchunk2_ID = next_subchunk_ID;
   subchunk2_size = next_subchunk_size;
+
+  if (!check_validity())
+  {
+    throw std::invalid_argument("Error: Can't read invalid header!");
+  }
 }
 
-WavHeader::WavHeader(const string& filepath) : WavHeader(readfile(filepath.c_str())) {}
+WavHeader::WavHeader(const char* file_path) : WavHeader(readfile(file_path)) {}
 
 bool WavHeader::check_validity()
 {
@@ -116,96 +119,97 @@ bool WavHeader::check_validity()
   return true;
 }
 
+uint16_t WavHeader::get_audio_format()
+{
+  if (audio_format != format::WAVE_FORMAT_EXTENSIBLE)
+  {
+    return audio_format;
+  }
+  return subformat;
+}
+
 uint16_t WavHeader::get_num_of_channels()
 {
-  if (check_validity())
-  {
-    return num_of_channels;
-  }
-  throw std::invalid_argument("Error: Can't read invalid header!");
+ return num_of_channels; 
 }
 
 uint32_t WavHeader::get_frequency()
 {
-  if (check_validity())
-  {
-    return samples_per_sec;
-  }
-  throw std::invalid_argument("Error: Can't read invalid header!");
+  return samples_per_sec;
 }
 
 // Can return 0, if bits_per_sample is not used in format
 uint16_t WavHeader::get_bit_depth()
 {
-  if (check_validity())
-  {
-    return bits_per_sample;
-  }
-  throw std::invalid_argument("Error: Can't read invalid header!");
+  return bits_per_sample; 
 }
 
 std::string WavHeader::get_sample_type()
 {
-  if (check_validity())
+  if (audio_format == format::WAVE_FORMAT_IEEE_FLOAT || subformat == format::WAVE_FORMAT_IEEE_FLOAT)
   {
-    if (audio_format == format::WAVE_FORMAT_IEEE_FLOAT || subformat == format::WAVE_FORMAT_IEEE_FLOAT)
+    if (bits_per_sample <= 32)
     {
-      if (bits_per_sample <= 32)
-      {
-        return type::FLOAT;
-      }
-      return type::DOUBLE;
+      return type::FLOAT;
     }
-    if (bits_per_sample <= 8)
-    {
-      return type::UINT8_T;
-    }
-    if (bits_per_sample <= 16)
-    {
-      return type::UINT16_T;
-    } 
-    return type::UINT32_T;
+    return type::DOUBLE;
   }
-  throw std::invalid_argument("Error: Can't read invalid header!");
+  if (bits_per_sample <= 8)
+  {
+    return type::UINT8_T;
+  }
+  if (bits_per_sample <= 16)
+  {
+    return type::UINT16_T;
+  } 
+  return type::UINT32_T;
 }
 
 uint32_t WavHeader::get_bits_per_sec()
 {
-  if (check_validity())
-  {
-    return bytes_per_sec * 8;
-  }
-  throw std::invalid_argument("Error: Can't read invalid header!");
+  return bytes_per_sec * 8;
 }
 
-double WavHeader::get_length()
+uint32_t WavHeader::get_length_ms()
 {
-  if (check_validity())
-  {
-    return double(subchunk2_size) / double(bytes_per_sec);
-  }
-  throw std::invalid_argument("Error: Can't read invalid header!");
+  return subchunk2_size * 1000 / bytes_per_sec; 
+}
+
+uint32_t WavHeader::get_data_offset()
+{
+  return data_offset; 
+}
+
+uint32_t WavHeader::get_data_size()
+{
+  return subchunk2_size; 
+}
+
+uint32_t WavHeader::get_file_size()
+{
+  return chunk_size + 8;
+}
+
+uint16_t WavHeader::get_block_align()
+{
+  return block_align;
 }
 
 std::string WavHeader::to_string()
 {
-  if (check_validity())
-  {
-    std::stringstream str;
-    str << "RIFF chunk size: "            << chunk_size      << "\n"
-        << "FMT  subchunk size: "         << subchunk1_size  << "\n"
-        << "Audio compression format: "   << audio_format    << "\n"
-        << "Number of channels: "         << num_of_channels << "\n"
-        << "Sampling frequency in Hz: "   << samples_per_sec << "\n"
-        << "Bytes per second: "           << bytes_per_sec   << "\n" 
-        << "Bytes per block of samples: " << block_align     << "\n"
-        << "Number of bits per sample: "  << bits_per_sample << "\n" 
-        << "Size of extension for non-PCM formats: "
-                                          << extension_size  << "\n" 
-        << "Audio subformat of extensible format: "
-                                          << subformat       << "\n"
-        << "Sampled data length: "        << subchunk2_size  << "\n";
-    return str.str(); 
-  }
-  throw std::invalid_argument("Error: Can't read invalid header!");
+  std::stringstream str;
+  str << "RIFF chunk size: "            << chunk_size      << "\n"
+      << "FMT  subchunk size: "         << subchunk1_size  << "\n"
+      << "Audio compression format: "   << audio_format    << "\n"
+      << "Number of channels: "         << num_of_channels << "\n"
+      << "Sampling frequency in Hz: "   << samples_per_sec << "\n"
+      << "Bytes per second: "           << bytes_per_sec   << "\n" 
+      << "Bytes per block of samples: " << block_align     << "\n"
+      << "Number of bits per sample: "  << bits_per_sample << "\n" 
+      << "Size of extension for non-PCM formats: "
+                                        << extension_size  << "\n" 
+      << "Audio subformat of extensible format: "
+                                        << subformat       << "\n"
+      << "Sampled data length: "        << subchunk2_size;
+  return str.str(); 
 }

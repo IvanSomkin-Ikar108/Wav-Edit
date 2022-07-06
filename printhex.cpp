@@ -28,6 +28,7 @@ void print_as_hex_columns(std::vector<uint8_t>& bytes, size_t columnsCount, size
       readLength++;
     }
     cout_as_hex(bytes[readLength], '\n');
+    readLength++;
   }
   if (rest != 0)
   {
