@@ -218,7 +218,7 @@ double cstr_to_double(const char* cstr)
 
   if (conversion.fail())
   {
-    throw std::invalid_argument("Could not convert " + std::string(cstr) + " to float.");
+    throw std::invalid_argument("Could not convert " + std::string(cstr) + " to double.");
   }
 
   return cstr_double;
