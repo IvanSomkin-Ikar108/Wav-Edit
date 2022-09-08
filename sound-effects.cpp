@@ -134,8 +134,8 @@ template <typename T>
 void effect(std::vector<uint8_t>& bytes, WavHeader& header, FadeOptions& options)
 {
   uint32_t data_off = header.get_data_offset();
-  uint16_t block_size = header.get_block_align();
-  uint16_t sample_size = block_size / header.get_num_of_channels();
+  uint32_t block_size = header.get_block_align();
+  uint32_t sample_size = block_size / header.get_num_of_channels();
 
   if (!options.end_flag)
   {
@@ -212,9 +212,9 @@ void effect(std::vector<uint8_t>& bytes, WavHeader& header, FadeOptions& options
 template <typename T>
 void effect(std::vector<uint8_t>& bytes, WavHeader& header, ReverbOptions& options)
 {
-  uint16_t block_size = header.get_block_align();
-  uint16_t num_of_chan = header.get_num_of_channels();
-  uint16_t sample_size = block_size / num_of_chan;
+  uint32_t block_size = header.get_block_align();
+  uint32_t num_of_chan = header.get_num_of_channels();
+  uint32_t sample_size = block_size / num_of_chan;
   uint32_t start_off = header.get_data_offset();
   uint32_t end_off = start_off + header.get_data_size() - block_size;
 

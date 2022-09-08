@@ -47,7 +47,7 @@ WavHeader::WavHeader(const std::vector<uint8_t> &byte_file)
     throw std::invalid_argument("Error: Bad file - File is too small!");
   }
 
-  size_t offset = 0;
+  uint32_t offset = 0;
   chunk_ID   = _4x8_to_32_be(byte_file, 0);
   chunk_size = _4x8_to_32_le(byte_file, 4);
   format     = _4x8_to_32_be(byte_file, 8);
@@ -64,10 +64,10 @@ WavHeader::WavHeader(const std::vector<uint8_t> &byte_file)
 
   if (audio_format != format::WAVE_FORMAT_PCM)
   {
-    extension_size = _2x8_to_16_le(byte_file, offset);
+    extension_size = _2x8_to_16_le(byte_file, (size_t)offset);
     if (audio_format == format::WAVE_FORMAT_EXTENSIBLE)
     {
-      subformat = _2x8_to_16_le(byte_file, offset + 8);
+      subformat = _2x8_to_16_le(byte_file, (size_t)offset + 8);
     }
     offset += extension_size + 2;
   }
